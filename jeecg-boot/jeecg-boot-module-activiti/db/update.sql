@@ -1,4 +1,6 @@
 /*扩展表*/
+-- 流程定义扩展表
+-- auto-generated definition
 create table act_z_process
 (
     id             varchar(255) not null
@@ -18,8 +20,10 @@ create table act_z_process
     status         int          null comment '流程状态 部署后默认1激活',
     version        int          null comment '版本',
     business_table varchar(255) null comment '关联业务表名',
-    route_name     varchar(255) null comment '关联前端表单路由名'
-) comment '流程定义扩展表';
+    route_name     varchar(255) null comment '关联前端表单路由名',
+    roles          varchar(225) null comment '授权的角色'
+)
+    comment '流程定义扩展表';
 create table act_z_business
 (
     id           varchar(255)  not null

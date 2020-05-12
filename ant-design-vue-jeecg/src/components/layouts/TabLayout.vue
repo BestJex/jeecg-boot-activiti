@@ -78,7 +78,7 @@
         }
       },
       contentHeight() {
-        return window.innerHeight/2+250;
+        return window.innerHeight/2+300;
       }
     },
     created() {

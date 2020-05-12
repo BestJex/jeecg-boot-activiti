@@ -66,12 +66,13 @@
       <!-- layout content -->
       <a-layout-content :style="{ height: '100%', paddingTop: fixedHeader ? '59px' : '0' }">
         <slot></slot>
+        <global-footer style="padding: 10px;margin: 0;border-top: 2px solid #FFFFFF"/>
       </a-layout-content>
 
       <!-- layout footer -->
-      <a-layout-footer style="padding: 0px">
+      <!--<a-layout-footer style="padding: 0px;border-top: 2px solid #fff">
         <global-footer/>
-      </a-layout-footer>
+      </a-layout-footer>-->
     </a-layout>
 
     <!-- update-start---- author:os_chengtgen -- date:20190830 --  for:issues/463 -编译主题颜色已生效，但还一直转圈，显示主题 正在编译 ---- -->

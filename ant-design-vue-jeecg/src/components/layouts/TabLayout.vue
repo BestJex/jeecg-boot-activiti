@@ -18,7 +18,7 @@
         <span slot="tab" :pagekey="page.fullPath">{{ page.meta.title }}</span>
       </a-tab-pane>
     </a-tabs>
-    <div style="margin: 12px 12px 0;">
+    <div style="margin: 12px 12px 0;overflow-y: auto;overflow-x: hidden;" :style="{height:contentHeight+'px'}">
       <transition name="page-toggle">
         <keep-alive v-if="multipage">
           <router-view v-if="reloadFlag"/>
@@ -76,6 +76,9 @@
         } else {
           return this.$store.state.app.multipage
         }
+      },
+      contentHeight() {
+        return window.innerHeight/2+250;
       }
     },
     created() {

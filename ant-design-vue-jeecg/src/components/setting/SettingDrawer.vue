@@ -101,24 +101,24 @@
                   <div slot="title">内容区域宽度</div>
                 </a-list-item-meta>
               </a-list-item>
-              <a-list-item>
+              <!--<a-list-item>
                 <a-switch slot="actions" size="small" :defaultChecked="fixedHeader" @change="handleFixedHeader" />
                 <a-list-item-meta>
                   <div slot="title">固定 Header</div>
                 </a-list-item-meta>
-              </a-list-item>
-              <a-list-item>
+              </a-list-item>-->
+              <!--<a-list-item>
                 <a-switch slot="actions" size="small" :disabled="!fixedHeader" :defaultChecked="autoHideHeader" @change="handleFixedHeaderHidden" />
                 <a-list-item-meta>
                   <div slot="title" :style="{ textDecoration: !fixedHeader ? 'line-through' : 'unset' }">下滑时隐藏 Header</div>
                 </a-list-item-meta>
-              </a-list-item>
-              <a-list-item >
+              </a-list-item>-->
+              <!--<a-list-item >
                 <a-switch slot="actions" size="small" :disabled="(layoutMode === 'topmenu')" :checked="dataFixSiderbar" @change="handleFixSiderbar" />
                 <a-list-item-meta>
                   <div slot="title" :style="{ textDecoration: layoutMode === 'topmenu' ? 'line-through' : 'unset' }">固定侧边菜单</div>
                 </a-list-item-meta>
-              </a-list-item>
+              </a-list-item>-->
             </a-list>
           </div>
         </div>
@@ -134,24 +134,24 @@
                   <div slot="title">色弱模式</div>
                 </a-list-item-meta>
               </a-list-item>
-              <a-list-item>
+              <!--<a-list-item>
                 <a-switch slot="actions" size="small" :defaultChecked="multipage" @change="onMultipageWeak" />
                 <a-list-item-meta>
                   <div slot="title">多页签模式</div>
                 </a-list-item-meta>
-              </a-list-item>
+              </a-list-item>-->
             </a-list>
           </div>
         </div>
         <a-divider />
-        <div :style="{ marginBottom: '24px' }">
+        <!--<div :style="{ marginBottom: '24px' }">
           <a-alert type="warning">
             <span slot="message">
               配置栏只在开发环境用于预览，生产环境不会展现，请手动修改配置文件
               <a href="https://github.com/sendya/ant-design-pro-vue/blob/master/src/defaultSettings.js" target="_blank">src/defaultSettings.js</a>
             </span>
           </a-alert>
-        </div>
+        </div>-->
       </div>
       <div class="setting-drawer-index-handle" @click="toggle" v-if="visible">
 <!--        <a-icon type="setting" v-if="!visible"/>-->

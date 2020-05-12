@@ -57,11 +57,12 @@
     computed:{
       smenuStyle() {
         let style = { 'padding': '0' }
-        if (this.fixSiderbar) {
-          style['height'] = 'calc(100% - 59px)'
+        // if (this.fixSiderbar) {
+        //   style['height'] = 'calc(100% - 59px)'
+          style['height'] = (window.innerHeight-80)+"px";
           style['overflow'] = 'auto'
           style['overflow-x'] = 'hidden'
-        }
+        // }
         return style
       }
     },

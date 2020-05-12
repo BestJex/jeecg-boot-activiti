@@ -60,6 +60,7 @@ Vue.prototype.systemBase = {
   year:'2020',
   company:'xx公司',
   title:'xx系统',
+  explain:'xx系统简单介绍',
 }
 // 挂载全局使用的方法
 Vue.prototype.doMian = "/jeecg-boot/";

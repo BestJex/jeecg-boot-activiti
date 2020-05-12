@@ -18,8 +18,8 @@ import Print from 'vue-print-nb-jeecg'
 import preview from 'vue-photo-preview'
 import 'vue-photo-preview/dist/skin.css'
 
-require('@jeecg/antd-online-beta220')
-require('@jeecg/antd-online-beta220/dist/OnlineForm.css')
+// require('@jeecg/antd-online-beta220')
+// require('@jeecg/antd-online-beta220/dist/OnlineForm.css')
 
 import {
   ACCESS_TOKEN,
@@ -55,7 +55,12 @@ Vue.use(preview)
 Vue.use(vueBus);
 Vue.use(JeecgComponents);
 Vue.use(VueAreaLinkage);
-
+/*系统参数 名称 等等*/
+Vue.prototype.systemBase = {
+  year:'2020',
+  company:'xx公司',
+  title:'xx系统',
+}
 // 挂载全局使用的方法
 Vue.prototype.doMian = "/jeecg-boot/";
 Vue.prototype.postFormAction = postFormAction;

@@ -5,7 +5,7 @@
     :collapsible="collapsible"
     v-model="collapsed"
     :trigger="null">
-    <logo />
+    <logo :title="systemBase.title" />
     <s-menu
       :collapsed="collapsed"
       :menu="menus"

@@ -164,10 +164,10 @@
 
       // update-begin-author:sunjianlei date:20200120 for: 动态更改页面标题
       changeTitle(title) {
-        let projectTitle = "Jeecg-Boot 企业级快速开发平台"
+        let projectTitle = this.systemBase.title
         // 首页特殊处理
         if (this.$route.path === indexKey) {
-          document.title = projectTitle
+          document.title =  '首页 · ' + projectTitle
         } else {
           document.title = title + ' · ' + projectTitle
         }

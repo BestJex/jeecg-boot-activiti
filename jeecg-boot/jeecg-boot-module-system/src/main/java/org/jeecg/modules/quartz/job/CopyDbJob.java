@@ -11,7 +11,7 @@ import java.io.File;
 
 /**
  * 备份数据库 定时任务
- * 需要配置到定时任务，自行配置；需要配置 MysqlPath 环境变量，或修改代码指定路径
+ * 1.需要配置到定时任务，自行配置；2.需要配置 MysqlPath 环境变量，或修改代码指定路径
  * @Author Scott
  */
 @Slf4j

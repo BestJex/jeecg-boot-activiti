@@ -15,25 +15,28 @@
           :labelCol="labelCol"
           :wrapperCol="wrapperCol"
           label="day">
-          <a-date-picker v-decorator="[ 'day', validatorRules.day ]" />
+          <a-date-picker disabled v-decorator="[ 'day', validatorRules.day ]" />
         </a-form-item>
         <a-form-item
           :labelCol="labelCol"
           :wrapperCol="wrapperCol"
           label="week">
-          <a-input placeholder="请输入week" v-decorator="['week', {}]" />
+          <a-input disabled placeholder="请输入week" v-decorator="['week', {}]" />
         </a-form-item>
         <a-form-item
           :labelCol="labelCol"
           :wrapperCol="wrapperCol"
           label="是否工作日">
-          <a-input placeholder="请输入是否工作日" v-decorator="['isworking', {}]" />
+          <a-select v-decorator="['isworking', {}]">
+            <a-select-option value="1">是</a-select-option>
+            <a-select-option value="0">否</a-select-option>
+          </a-select>
         </a-form-item>
         <a-form-item
           :labelCol="labelCol"
           :wrapperCol="wrapperCol"
           label="周序号">
-          <a-input-number v-decorator="[ 'weeknum', {}]" />
+          <a-input-number disabled v-decorator="[ 'weeknum', {}]" />
         </a-form-item>
 		
       </a-form>

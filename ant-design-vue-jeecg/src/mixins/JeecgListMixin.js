@@ -292,10 +292,10 @@ export const JeecgListMixin = {
             this.$warning({
               title: message,
               content: (
-                <div>
+                `<div>
                   <span>{msg}</span><br/>
                   <span>具体详情请 <a href={href} target="_blank" download={fileName}>点击下载</a> </span>
-                </div>
+                </div>`
               )
             })
           } else {

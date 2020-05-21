@@ -21,8 +21,8 @@ spring:
         max-file-size: 10MB
         max-request-size: 10MB
   mail:
-    host: smtp.qq.com
-    username: 350012167@qq.com
+    host: smtp.163.com
+    username: jeecgos@163.com
     password: ??
     properties:
       mail:
@@ -129,7 +129,7 @@ spring:
         master:
           url: jdbc:mysql://127.0.0.1:3306/jeecg-boot?characterEncoding=UTF-8&useUnicode=true&useSSL=false&tinyInt1isBit=false
           username: root
-          password: 123456
+          password: rootroot
           driver-class-name: com.mysql.jdbc.Driver
           # 多数据源配置
           #multi-datasource1:

@@ -13,7 +13,6 @@ import java.io.Serializable;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ComboModel implements Serializable {
     private String id;
-    /**真实姓名*/
     private String title;
     /**文档管理 表单table默认选中*/
     private boolean checked;

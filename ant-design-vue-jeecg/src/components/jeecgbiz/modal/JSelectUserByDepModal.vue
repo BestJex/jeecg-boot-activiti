@@ -61,6 +61,7 @@
   export default {
     name: 'JSelectUserByDepModal',
     components: {},
+    props: ['modalWidth', 'multi', 'userIds','customReturnField'],
     data() {
       return {
         queryParam: {
@@ -131,7 +132,6 @@
         expandedKeys: [],
       }
     },
-    props: ['modalWidth', 'multi', 'userIds','customReturnField'],
     computed: {
       // 计算属性的 getter
       getType: function () {
@@ -172,7 +172,6 @@
                 selectedRowKeys.push(user['id'])
               })
               this.selectedRowKeys = selectedRowKeys
-              console.log("回显用户",selectedRowKeys)
               this.$emit('initComp', realNames.join(','))
             }
           })

@@ -52,7 +52,7 @@ public class ActBusinessServiceImpl extends ServiceImpl<ActBusinessMapper, ActBu
                 }
             }
             String substring = setSql.substring(0, setSql.length()-1);//去掉最后一个,号
-            this.baseMapper.insertBusiData(String.format("update %s set %s where id = '%s'",tableName,substring,tableId));
+            this.baseMapper.updateBusiData(String.format("update %s set %s where id = '%s'",tableName,substring,tableId));
         }
 
     }
@@ -77,5 +77,14 @@ public class ActBusinessServiceImpl extends ServiceImpl<ActBusinessMapper, ActBu
 
     public List<String> selectIRunIdentity(String taskId, String type) {
        return baseMapper.selectIRunIdentity(taskId,type);
+    }
+/**修改业务表的流程字段*/
+    public void updateBusinessStatus(String tableName, String tableId, String actStatus) {
+        try {
+            baseMapper.updateBusinessStatus(tableName,tableId,actStatus);
+        } catch (Exception e) {
+             // 业务表需要有 act_status字段，没有会报错，不管他
+            e.printStackTrace();
+        }
     }
 }

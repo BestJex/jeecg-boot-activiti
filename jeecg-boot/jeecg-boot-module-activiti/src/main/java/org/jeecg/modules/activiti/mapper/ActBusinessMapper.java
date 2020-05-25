@@ -19,18 +19,26 @@ public interface ActBusinessMapper extends BaseMapper<ActBusiness> {
 
     @Insert("${sql}")
     int insertBusiData(@Param("sql") String sql);
+
     @Update("${sql}")
     int updateBusiData(@Param("sql") String sql);
+
     @Delete("delete from ${tableName} where id = #{tableId}")
     int deleteBusiData(@Param("tableId") String tableId, @Param("tableName") String tableName);
+
     @Select("SELECT ahi.USER_ID_ FROM ACT_HI_IDENTITYLINK ahi\n" +
             "      WHERE TYPE_ = #{type} AND TASK_ID_ = #{taskId}\n" +
             "      LIMIT 1")
     String findUserIdByTypeAndTaskId(@Param("type") String type, @Param("taskId") String taskId);
+
     @Insert("INSERT INTO ACT_HI_IDENTITYLINK (ID_, TYPE_, USER_ID_, TASK_ID_, PROC_INST_ID_)\n" +
             "      VALUES (#{id}, #{type}, #{userId}, #{taskId}, #{procInstId})")
     int insertHI_IDENTITYLINK(@Param("id") String id, @Param("type")String type, @Param("userId")String userId, @Param("taskId")String taskId, @Param("procInstId")String procInstId);
+
     @Select("SELECT ari.ID_ FROM ACT_RU_IDENTITYLINK ari\n" +
             "      WHERE TYPE_ = #{type} AND TASK_ID_ = #{taskId}")
     List<String> selectIRunIdentity(@Param("taskId")String taskId,@Param("type") String type);
+
+    @Update("update ${tableName} set act_status = #{actStatus} where id = #{tableId}")
+    int updateBusinessStatus(@Param("tableName")String tableName, @Param("tableId")String tableId, @Param("actStatus")String actStatus);
 }

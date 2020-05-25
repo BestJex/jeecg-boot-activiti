@@ -102,7 +102,7 @@ public class ActBusinessController {
 
         for(String id : ids.split(",")){
             ActBusiness actBusiness = actBusinessService.getById(id);
-            if(actBusiness.getStatus()!=0){
+            if(actBusiness.getStatus()!=ActivitiConstant.STATUS_TO_APPLY){
                 return Result.error("删除失败, 仅能删除草稿状态的申请");
             }
             // 删除关联业务表
@@ -130,10 +130,12 @@ public class ActBusinessController {
         }
         String processInstanceId = actZprocessService.startProcess(act);
         actBusiness.setProcInstId(processInstanceId);
-        actBusiness.setStatus(1);
-        actBusiness.setResult(1);
+        actBusiness.setStatus(ActivitiConstant.STATUS_DEALING);
+        actBusiness.setResult(ActivitiConstant.RESULT_DEALING);
         actBusiness.setApplyTime(new Date());
         actBusinessService.updateById(actBusiness);
+        //修改业务表的流程字段
+        actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"启动");
         return Result.ok("操作成功");
     }
     /*撤回申请*/
@@ -150,6 +152,8 @@ public class ActBusinessController {
         actBusiness.setStatus(ActivitiConstant.STATUS_CANCELED);
         actBusiness.setResult(ActivitiConstant.RESULT_TO_SUBMIT);
         actBusinessService.updateById(actBusiness);
+        //修改业务表的流程字段
+        actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"撤回");
         return Result.ok("操作成功");
     }
     /**/
@@ -173,7 +177,7 @@ public class ActBusinessController {
                 e.setRouteName(actProcess.getRouteName());
                 e.setProcessName(actProcess.getName());
             }
-            if("1".equals(e.getStatus())){
+            if(ActivitiConstant.STATUS_DEALING.equals(e.getStatus())){
                 // 关联当前任务
                 List<Task> taskList = taskService.createTaskQuery().processInstanceId(e.getProcInstId()).list();
                 if(taskList!=null&&taskList.size()==1){

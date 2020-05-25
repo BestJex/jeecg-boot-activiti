@@ -159,7 +159,7 @@ public class ActTaskController {
 
         return Result.ok(newList);
     }
-    /*任务节点审批驳回至发起人*/
+    /*任务节点审批 驳回至发起人*/
     @RequestMapping(value = "/back", method = RequestMethod.POST)
     public Result<Object> back(@ApiParam("任务id") @RequestParam String id,
                                @ApiParam("流程实例id") @RequestParam String procInstId,
@@ -187,6 +187,8 @@ public class ActTaskController {
         // 记录实际审批人员
         actBusinessService.insertHI_IDENTITYLINK(IdUtil.simpleUUID(),
                 ActivitiConstant.EXECUTOR_TYPE, sysUser.getUsername(), id, procInstId);
+        //修改业务表的流程字段
+        actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"驳回");
         return Result.ok("操作成功");
     }
     /*流程流转历史*/
@@ -256,11 +258,15 @@ public class ActTaskController {
             taskService.setAssignee(id, oldAssignee);
         }
         taskService.complete(id);
+        ActBusiness actBusiness = actBusinessService.getById(pi.getBusinessKey());
+        //修改业务表的流程字段
+        actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"审批中-"+task.getName());
+
+        task.getName();
         LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(procInstId).list();
         // 判断下一个节点
         if(tasks!=null&&tasks.size()>0){
-            ActBusiness actBusiness = actBusinessService.getById(pi.getBusinessKey());
             for(Task t : tasks){
                 if(StrUtil.isBlank(assignees)){
                     // 如果下个节点未分配审批人为空 取消结束流程
@@ -270,6 +276,9 @@ public class ActTaskController {
                         actBusiness.setStatus(ActivitiConstant.STATUS_CANCELED);
                         actBusiness.setResult(ActivitiConstant.RESULT_TO_SUBMIT);
                         actBusinessService.updateById(actBusiness);
+                        //修改业务表的流程字段
+                        actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"审批异常-"+task.getName()+"-审批节点未分配审批人，流程自动中断取消");
+
                         break;
                     }else{
                         // 避免重复添加
@@ -300,7 +309,6 @@ public class ActTaskController {
                 }
             }
         } else {
-            ActBusiness actBusiness = actBusinessService.getById(pi.getBusinessKey());
             actBusiness.setStatus(ActivitiConstant.STATUS_FINISH);
             actBusiness.setResult(ActivitiConstant.RESULT_PASS);
             actBusinessService.updateById(actBusiness);
@@ -308,6 +316,9 @@ public class ActTaskController {
             LoginUser user = sysBaseAPI.getUserByName(actBusiness.getUserId());
             actZprocessService.sendMessage(loginUser,user,ActivitiConstant.MESSAGE_PASS_CONTENT,
                     String.format("您的 【%s】 申请已通过！",actBusiness.getTitle()),sendMessage, sendSms, sendEmail);
+            //修改业务表的流程字段
+            actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"审批通过");
+
         }
         // 记录实际审批人员
         actBusinessService.insertHI_IDENTITYLINK(IdUtil.simpleUUID(),

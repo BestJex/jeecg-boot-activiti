@@ -246,6 +246,7 @@
         },
         identity:"1",
         fileList:[],
+        loginUser:{}
       }
     },
     created () {
@@ -311,6 +312,7 @@
           console.log(loginUser)
           if (!loginUser) return;
           let loginUserObj = JSON.parse(loginUser);
+          this.loginUser = loginUserObj;
           record = loginUserObj.value
         }
         this.resetScreenSize(); // 调用此方法,根据屏幕宽度自适应调整抽屉的宽度
@@ -430,7 +432,8 @@
             obj.then((res)=>{
               if(res.success){
                 that.$message.success(res.message);
-                that.$emit('ok');
+                that.loginUser.value = formData;
+                localStorage.setItem("pro__Login_Userinfo",JSON.stringify(that.loginUser))
               }else{
                 that.$message.warning(res.message);
               }

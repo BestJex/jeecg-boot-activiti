@@ -52,7 +52,7 @@
      <!-- <a-upload name="file" :showUploadList="false" :multiple="false" :headers="tokenHeader" :action="importExcelUrl" @change="handleImportExcel">
         <a-button type="primary" icon="import">导入</a-button>
       </a-upload>-->
-      <a-button type="primary" icon="setting" @click="visibleAotu = true">一键生成基本日期</a-button>
+      <a-button type="primary" icon="setting" @click="visibleAotu = true">一键生成</a-button>
       <a-dropdown v-if="selectedRowKeys.length > 0">
         <a-menu slot="overlay">
           <a-menu-item key="1" @click="batchDel"><a-icon type="delete"/>删除</a-menu-item>
@@ -61,9 +61,9 @@
       </a-dropdown>
     </div>
 
-    <a-modal title="选择年份" v-model="visibleAotu" @ok="initDate()">
+    <a-modal title="选择年份" v-model="visibleAotu" @ok="aotuData()">
       <a-spin tip="数据操作中,请稍后。。。" :spinning="spinning">
-        <a-alert message="holidayApi已不可用， 国家法定节假日、调休请根据实际手动设置！"></a-alert>
+        <a-alert message="将会删除所选年份数据并重新生成国家法定节假日、调休，来源于国务院网站：http://www.gov.cn/zhengce 如有错误，请根据实际手动设置修改！"></a-alert>
         <div style="height: 4px"></div>
         <a-select v-model="aotuYear" placeholder="选择年份" style="width: 100%">
           <a-select-option v-for="year in years" :key="year" :value="year">{{year}}年</a-select-option>
@@ -119,6 +119,7 @@
   import XdScheduleModal from './XdScheduleModal'
   import { JeecgListMixin } from '@/mixins/JeecgListMixin'
   import { deleteAction, getAction,downFile } from '@/api/manage'
+  import { getHolidaysByYear } from '@/config/holidays'
   import axios from 'axios'
   import moment from 'moment'
   export default {
@@ -129,7 +130,7 @@
     },
     data () {
       return {
-        years:[2019,2020],
+        years:[],
         aotuYear:moment().format("YYYY"),
         visibleAotu:false,
         description: '时间表管理页面',
@@ -154,6 +155,11 @@
             title: 'week',
             align:"center",
             dataIndex: 'week'
+           },
+		   {
+            title: '星期几',
+            align:"center",
+            dataIndex: 'dayofweek'
            },
 		   {
             title: '是否工作日',
@@ -227,70 +233,34 @@
         var _this = this;
         _this.spinning = true;
         let yyyy = _this.aotuYear;
-        console.log(yyyy)
-        var params = [];
-        for (var i = 1; i <= 12; i++) {
-          params.push(yyyy + "0" + i + ",");
-        }
-        params.push(yyyy + "10,");
-        params.push(yyyy + "11,");
-        params.push(yyyy + "12,");
-        axios.get(`${this.url.holidayApi}?m=${params.join("")}`).then(res => {
-          console.log(res)
-          if (res.status == 200) {
-            let body = JSON.stringify(res.data);
-            _this.initDate(yyyy,body);
-
-          } else {
-            _this.$confirm({
-              title: '提示',
-              content: 'holidayApi 请求失败，是否初始化基本日期信息？',
-              okText: '确认',
-              cancelText: '取消',
-              onOk:function () {
-                _this.initDate(yyyy,"");
-              }
-            });
-            _this.spinning = false;
-          }
-        }).catch((error) => {
-          console.error(error)
-          _this.$confirm({
-            title: '提示',
-            content: 'holidayApi 请求失败，是否初始化基本日期信息？',
-            okText: '确认',
-            cancelText: '取消',
-            onOk:function () {
-              _this.initDate(yyyy,"");
+        let holidaysByYear = getHolidaysByYear(yyyy);
+        if (holidaysByYear) {
+          let body = JSON.stringify(holidaysByYear);
+          console.log(body)
+          getAction(this.url.aotuData, {yyyy:_this.aotuYear,body:body}).then((res) => {
+            if (res.success) {
+              console.log(res)
+              this.$message.success(res.message)
+              _this.visibleAotu = false;
+              _this.loadData();
             }
-          });
+            if(res.code===510){
+              this.$message.warning(res.message)
+            }
+            if(res.code===500){
+              this.$message.error(res.message)
+            }
+            _this.spinning = false;
+          })
+
+        } else {
+          _this.$message.error(`没有${yyyy}年度节假日配置！`)
           _this.spinning = false;
-        }).finally(() => {
-        })
+        }
 
 
 
       },
-      initDate(yyyy,body){
-        var _this = this;
-        yyyy=yyyy||_this.aotuYear;
-        body=body||"";
-        getAction(this.url.aotuData, {yyyy:yyyy,body:body}).then((res) => {
-          if (res.success) {
-            console.log(res)
-            this.$message.success(res.message)
-            _this.visibleAotu = false;
-            _this.loadData();
-          }
-          if(res.code===510){
-            this.$message.warning(res.message)
-          }
-          if(res.code===500){
-            this.$message.error(res.message)
-          }
-          _this.spinning = false;
-        })
-      }
     }
   }
 </script>

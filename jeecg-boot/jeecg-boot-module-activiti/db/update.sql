@@ -23,7 +23,7 @@ create table act_z_process
     route_name     varchar(255) null comment '关联前端表单路由名',
     roles          varchar(225) null comment '授权的角色'
 )
-    comment '流程定义扩展表';
+    CHARSET=utf8 comment '流程定义扩展表';
 create table act_z_business
 (
     id           varchar(255)  not null
@@ -43,7 +43,7 @@ create table act_z_business
     apply_time   datetime      null comment '提交申请时间',
     is_history   bit           null comment '历史标记',
     table_name   varchar(255)  null comment '数据表名'
-) comment '流程业务扩展表';
+) CHARSET=utf8 comment '流程业务扩展表';
 create table act_z_node
 (
     id          varchar(255) not null
@@ -56,7 +56,7 @@ create table act_z_node
     node_id     varchar(255) null comment '节点id',
     type        varchar(255) null comment '节点关联类型 0角色 1用户 2部门',
     relate_id   varchar(255) null comment '关联其他表id'
-) comment '流程节点扩展表';
+) CHARSET=utf8 comment '流程节点扩展表';
 
 
 

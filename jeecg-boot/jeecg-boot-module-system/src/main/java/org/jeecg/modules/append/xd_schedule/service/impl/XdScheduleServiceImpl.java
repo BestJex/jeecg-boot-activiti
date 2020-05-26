@@ -18,7 +18,6 @@ import org.jeecg.modules.append.xd_schedule.service.IXdScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -89,33 +88,21 @@ public class XdScheduleServiceImpl extends ServiceImpl<XdScheduleMapper, XdSched
 
 
     }
-/**通过api同步国家法定节假日
- * http://www.easybots.cn/api/holiday.php?m=201901,201902,201903,201904,201905,201906,201907,201908,201909,201910,201911,201912
- * https://www.cnblogs.com/learningJAVA/p/6180446.html
- * 休息日对应结果为 1, 节假日对应的结果为 2；
- *
- * 已转移到前端获取，因为内网无法访问调取接口
+/**
+ * 生成国家法定节假日
  * */
     public void aotuData(String yyyy,String body) {
         if (StrUtil.isBlank(yyyy)){
             throw new RuntimeException("年份不能为空");
         }
         /*包含所有节假日、休息日*/
-        List<String> notWorkingDays = Lists.newArrayList();
         log.info("请求获取到的body数据 ： "+body);
         JSONObject apiData = null;
-        if (StrUtil.isNotBlank(body)){
+        if (StrUtil.isNotBlank(body)) {
             try {
                 apiData = JSON.parseObject(body);
             } catch (Exception e) {
-                throw new RuntimeException("api获取的数据有误！");
-            }
-            for (String yyyyMM : apiData.keySet()) {
-                JSONObject yyyyMMobj = apiData.getJSONObject(yyyyMM);
-                for (String dd : yyyyMMobj.keySet()) {
-                    String yyyyMMdd = yyyyMM+dd;
-                    notWorkingDays.add(yyyyMMdd);
-                }
+                throw new RuntimeException("节假日的数据有误！");
             }
         }
 
@@ -136,14 +123,20 @@ public class XdScheduleServiceImpl extends ServiceImpl<XdScheduleMapper, XdSched
         while(calendar.getTime().getTime()<=calendarEnd.getTime().getTime()){//用一整年的日期循环
             Date date = calendar.getTime();
             String format = sf.format(date);
-            //是否工作日
-            boolean isworking = !notWorkingDays.contains(format);
 
             int weekOfYear = calendar.get(Calendar.WEEK_OF_YEAR);//第几周
             int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);//第几天
             int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);//一周中第几周
             int month = calendar.get(Calendar.MONTH)+1;//月份
-            if (StrUtil.isBlank(body)) isworking = dayOfWeek==1||dayOfWeek==7;
+            //是否工作日
+            boolean isworking = dayOfWeek!=1&&dayOfWeek!=7;//周末休息
+            if (StrUtil.isNotBlank(body)){
+                Integer dayType = apiData.getInteger(format);
+                if (dayType!=null){ //1法定调休，2法定放假
+                    if (dayType==1) isworking = true;
+                    if (dayType==2) isworking = false;
+                }
+            }
             String weekNum;
             String week;
             if (dayOfWeek==1){
@@ -169,14 +162,22 @@ public class XdScheduleServiceImpl extends ServiceImpl<XdScheduleMapper, XdSched
             XdSchedule xdSchedule = new XdSchedule();
             xdSchedule.init();
             xdSchedule.setWeek(week);
-            xdSchedule.setWeeknum(new BigDecimal(Convert.toInt(weekNum)));
+            xdSchedule.setWeeknum(Convert.toInt(weekNum));
+            xdSchedule.setYear(Convert.toInt(year));
+            xdSchedule.setMonth(Convert.toInt(month));
+            if (dayOfWeek==1){
+                xdSchedule.setDayofweek(Convert.toInt(7));
+            }else {
+                xdSchedule.setDayofweek(Convert.toInt(dayOfWeek-1));
+            }
             xdSchedule.setDay(date);
+            xdSchedule.setCreateTime(new Date());
             xdSchedule.setIsworking(isworking?"1":"0");
             addDays.add(xdSchedule);
 
             calendar.add(Calendar.DAY_OF_MONTH, 1);//日期+1
         }
-        this.remove(new LambdaQueryWrapper<XdSchedule>().likeRight(XdSchedule::getWeek,year));
+        this.remove(new LambdaQueryWrapper<XdSchedule>().likeRight(XdSchedule::getYear,year));
         this.saveBatch(addDays);
 
     }

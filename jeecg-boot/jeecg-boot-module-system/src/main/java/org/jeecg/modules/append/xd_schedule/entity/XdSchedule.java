@@ -50,7 +50,19 @@ public class XdSchedule {
 	/**周序号*/
 	@Excel(name = "周序号", width = 15)
     @ApiModelProperty(value = "周序号")
-	private java.math.BigDecimal weeknum;
+	private Integer weeknum;
+	/**年份*/
+	@Excel(name = "年份", width = 15)
+    @ApiModelProperty(value = "年份")
+	private Integer year;
+	/**周序号*/
+	@Excel(name = "月份", width = 15)
+    @ApiModelProperty(value = "月份")
+	private Integer month;
+	/**周序号*/
+	@Excel(name = "星期几", width = 15)
+    @ApiModelProperty(value = "星期几")
+	private Integer dayofweek;
 	/**范围 自设字段不一定有值*/
 	@TableField(exist = false)
 	private String weekround;

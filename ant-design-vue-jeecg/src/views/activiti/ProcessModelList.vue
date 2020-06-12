@@ -345,7 +345,8 @@
           formComponent : null
         },
         lcTypeF:[],
-        dataList: []
+        dataList: [],
+        updateRow: {}
       }
     },
     computed:{
@@ -443,7 +444,8 @@
         this.postFormAction(_this.url.editNodeUser,this.spry).then(res => {
           if (res.success) {
             _this.$message.success("操作成功");
-            // _this.getData();
+            /*保存成功后回显数据*/
+            _this.getNodeData(_this.updateRow);
           }else {
             _this.$message.error(res.message);
           }
@@ -451,6 +453,7 @@
       },
       getNodeData(row){
         var _this = this;
+        _this.updateRow = row;
         _this.postFormAction(_this.url.getProcessNode,{
           id:row.id
         }).then(res => {

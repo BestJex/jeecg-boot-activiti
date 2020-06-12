@@ -60,7 +60,7 @@ filterChainDefinitionMap.put("/editor-app/**", "anon");
 
 >功能齐备，使用方法自己研究，正常开发者看看代码就应该会，看不会我解释起来也会挺费劲的。通过流程模块的七个菜单走查代码即可（看不见菜单，请先执行activiti模块包下的相关增量sql，再给菜单授权即可。），代码简单易读，一年经验的开发者读懂毫无问题！
 
-
+![流程相关菜单](https://images.gitee.com/uploads/images/2020/0612/160424_2624efb9_1406033.png "屏幕截图.png")
 
 
 ## 捐赠 

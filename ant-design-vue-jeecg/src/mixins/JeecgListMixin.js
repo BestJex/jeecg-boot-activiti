@@ -55,8 +55,7 @@ export const JeecgListMixin = {
   computed:{
     scroll:function(){
       var width = window.innerWidth;
-      //ant-table
-      let $antTable = window.document.getElementsByClassName("ant-table");
+      let $antTable = window.document.getElementsByClassName("ant-row");
       if ($antTable[0]){
         width = $antTable[0].clientWidth;
       }

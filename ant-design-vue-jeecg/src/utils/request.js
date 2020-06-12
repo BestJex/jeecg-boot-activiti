@@ -101,6 +101,10 @@ service.interceptors.request.use(config => {
 
 // response interceptor
 service.interceptors.response.use((response) => {
+    let data = response.data;
+    if (data.code==502){
+      notification.error({ message: '系统提示', description: '登陆已过期，重新登陆。',duration: 4})
+    }
     return response.data
   }, err)
 

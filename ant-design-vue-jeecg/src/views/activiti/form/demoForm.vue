@@ -1,4 +1,5 @@
 <template>
+  <!--流程业务表单-->
   <div class="form-main">
     <a-card :body-style="{padding: '24px 32px'}" :bordered="false">
       <a-form @submit="handleSubmit" :form="form">
@@ -7,19 +8,26 @@
           :labelCol="{lg: {span: 7}, sm: {span: 7}}"
           :wrapperCol="{lg: {span: 10}, sm: {span: 17} }">
           <a-input :disabled="disabled"
-            v-decorator="[
+                   v-decorator="[
             'name',
             {rules: [{ required: true, message: '请输入标题' }]}
           ]"
-            name="name"
-            placeholder="给目标起个名字" />
+                   name="name"
+                   placeholder="给目标起个名字" />
         </a-form-item>
         <a-form-item v-if="!disabled"
-          :wrapperCol="{ span: 24 }"
-          style="text-align: center"
+                     :wrapperCol="{ span: 24 }"
+                     style="text-align: center"
         >
-          <a-button htmlType="submit" type="primary" :disabled="disabled||btndisabled" @click="handleSubmit">保存</a-button>
+          <a-button type="primary" :disabled="disabled||btndisabled" @click="handleSubmit">保存</a-button>
           <a-button style="margin-left: 8px" :disabled="disabled" @click="close">取消</a-button>
+        </a-form-item>
+        <a-form-item v-if="task"
+                     :wrapperCol="{ span: 24 }"
+                     style="text-align: center"
+        >
+          <a-button type="primary"  @click="passTask">通过</a-button>
+          <a-button style="margin-left: 8px"  @click="backTask">驳回</a-button>
         </a-form-item>
       </a-form>
     </a-card>
@@ -45,7 +53,9 @@
         required:false
       },
       /*是否新增*/
-      isNew: {type: Boolean, default: false, required: false}
+      isNew: {type: Boolean, default: false, required: false},
+      /*是否处理流程*/
+      task: {type: Boolean, default: false, required: false}
     },
     data () {
       return {
@@ -111,6 +121,7 @@
             this.postFormAction(url,formData).then((res)=>{
               if (res.success){
                 this.$message.success("保存成功！")
+                //todo 将表单的数据传给父组件
                 this.$emit('afterSubmit',formData)
               }else {
                 this.$message.error(res.message)
@@ -122,7 +133,16 @@
         })
       },
       close() {
+        //todo 关闭后的回调
         this.$emit('close')
+      },
+      /*通过审批*/
+      passTask() {
+        this.$emit('passTask')
+      },
+      /*驳回审批*/
+      backTask() {
+        this.$emit('backTask')
       }
     }
   }

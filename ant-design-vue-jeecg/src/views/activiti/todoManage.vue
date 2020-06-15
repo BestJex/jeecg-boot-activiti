@@ -88,7 +88,7 @@
           </a-table-column>
           <a-table-column title="操作" dataIndex=""  align="center">
             <template slot-scope="t,r,i">
-              <a href="javascript:void(0);" @click="detail(r)" style="color: blue">申请详情</a>
+              <a href="javascript:void(0);" @click="detail(r)" style="color: blue">查看并处理</a>
               <a-divider type="vertical" />
               <span v-if="Boolean(r.isSuspended)" style="cursor: no-drop;color: #999999;" title="流程已被挂起，无法操作！">
                 通过 <a-divider type="vertical" />
@@ -96,11 +96,11 @@
                 委托 <a-divider type="vertical" />
               </span>
               <span v-else>
-                <a href="javascript:void(0);" @click="passTask(r)" style="color: green">通过</a>
+                <!--<a href="javascript:void(0);" @click="passTask(r)" style="color: green">通过</a>
                 <a-divider type="vertical" />
                 <a href="javascript:void(0);" @click="backTask(r)" style="color: orange">驳回</a>
-                <a-divider type="vertical" />
-                <a href="javascript:void(0);" @click="delegateTask(r)" style="color: #00A0E9">委托</a>
+                <a-divider type="vertical" />-->
+                <a href="javascript:void(0);" @click="delegateTask(r)" style="color: #00A0E9">委托他人代办</a>
                 <a-divider type="vertical" />
               </span>
               <a href="javascript:void(0);" @click="history(r)" style="color: #217dbb">历史</a>
@@ -119,6 +119,9 @@
     <a-modal :title="lcModa.title" v-model="lcModa.visible" :footer="null" :maskClosable="false" width="80%">
       <component :disabled="lcModa.disabled" v-if="lcModa.visible" :is="lcModa.formComponent"
                  :processData="lcModa.processData" :isNew = "lcModa.isNew"
+                 :task="true"
+                 @passTask = "()=>passTask(lcModa.processData)"
+                 @backTask = "()=>backTask(lcModa.processData)"
                  @close="lcModa.visible=false,lcModa.disabled = false"></component>
     </a-modal>
     <!-- 审批操作 -->
@@ -302,6 +305,7 @@ export default {
     clearSelectAll() {
       this.$refs.table.selectAll(false);
     },
+    /*审批提交的方法*/
     handelSubmit() {
       console.log("提交")
       this.submitLoading = true;
@@ -319,6 +323,7 @@ export default {
         this.postFormAction(this.url.pass,formData).then(res => {
           this.submitLoading = false;
           if (res.success) {
+            this.lcModa.visible=false
             this.$message.success("操作成功");
             this.modalTaskVisible = false;
             this.getDataList();
@@ -331,6 +336,7 @@ export default {
           this.postFormAction(this.url.back,formData).then(res => {
             this.submitLoading = false;
             if (res.success) {
+              this.lcModa.visible=false
               this.$message.success("操作成功");
               this.modalTaskVisible = false;
               this.getDataList();
@@ -348,6 +354,7 @@ export default {
           this.postFormAction(this.url.backToTask,formData).then(res => {
             this.submitLoading = false;
             if (res.success) {
+              this.lcModa.visible=false
               this.$message.success("操作成功");
               this.modalTaskVisible = false;
               this.getDataList();

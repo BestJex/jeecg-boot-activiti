@@ -91,9 +91,8 @@
               <a href="javascript:void(0);" @click="detail(r)" style="color: blue">查看并处理</a>
               <a-divider type="vertical" />
               <span v-if="Boolean(r.isSuspended)" style="cursor: no-drop;color: #999999;" title="流程已被挂起，无法操作！">
-                通过 <a-divider type="vertical" />
-                驳回 <a-divider type="vertical" />
-                委托 <a-divider type="vertical" />
+                查看并处理 <a-divider type="vertical" />
+                委托他人代办 <a-divider type="vertical" />
               </span>
               <span v-else>
                 <!--<a href="javascript:void(0);" @click="passTask(r)" style="color: green">通过</a>

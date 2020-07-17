@@ -31,7 +31,7 @@
         </a-collapse>
       </div>
     <!--流程表单-->
-    <a-modal :title="lcModa.title" v-model="lcModa.visible" :footer="null" :maskClosable="false" width="80%">
+    <a-modal :destroyOnClose="true" :title="lcModa.title" v-model="lcModa.visible" :footer="null" :maskClosable="false" width="80%">
       <component :disabled="lcModa.disabled" v-if="lcModa.visible" :is="lcModa.formComponent"
                  :processData="lcModa.processData" :isNew = "lcModa.isNew"
                  @afterSubmit="afterSub" @close="lcModa.visible=false,lcModa.disabled = false"></component>

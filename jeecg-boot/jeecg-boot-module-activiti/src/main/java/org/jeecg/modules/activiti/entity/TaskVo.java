@@ -5,6 +5,7 @@ import lombok.Data;
 import org.activiti.engine.task.Task;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * @author pmc
@@ -42,6 +43,7 @@ public class TaskVo {
     private Date createTime;
 
     private String processName;
+    private String title;
 
     private String routeName;
 
@@ -49,7 +51,9 @@ public class TaskVo {
 
     private String tableId;
     private String tableName;
-
+    private Integer status;
+    private Integer result;
+    private Map dataMap;
     public TaskVo(Task task){
         this.id = task.getId();
         this.name = task.getName();

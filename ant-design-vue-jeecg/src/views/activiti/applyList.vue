@@ -116,7 +116,7 @@
           <template v-if="r.status == 0">
             <a href="javascript:void(0);" style="color: #00A0E9" @click="apply(r)" >提交申请</a>
             <a-divider type="vertical" />
-            <a href="javascript:void(0);" @click="edit(r)" style="color: #000000">编辑</a>
+            <a href="javascript:void(0);" @click="edit(r)" style="color: #000000">编辑提交数据</a>
             <a-divider type="vertical" />
             <a-popconfirm title="确定删除吗?" @confirm="() => remove(r)">
               <a href="javascript:void(0);"  style="color: red">删除</a>
@@ -345,7 +345,7 @@
       },
       getProcessList() {
         this.addApplyLoading = true;
-        this.postFormAction(this.url.getProcessDataList,{status:1,roles:true}).then(res => {
+        this.getAction(this.url.getProcessDataList,{status:1,roles:true}).then(res => {
           this.activeKeyAll = [];
           if (res.success) {
             var result = res.result||[];

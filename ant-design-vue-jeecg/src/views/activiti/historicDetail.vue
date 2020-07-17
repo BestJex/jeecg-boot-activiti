@@ -97,7 +97,7 @@ export default {
     return {
       url:{
         historicFlow:'/actTask/historicFlow/',
-        getHighlightImg:`${this.doMian}/activiti/models/getHighlightImg/`
+        getHighlightImg:`${window._CONFIG['domianURL']}/activiti/models/getHighlightImg/`
       },
       type: 0,
       loading: false, // 表单加载状态

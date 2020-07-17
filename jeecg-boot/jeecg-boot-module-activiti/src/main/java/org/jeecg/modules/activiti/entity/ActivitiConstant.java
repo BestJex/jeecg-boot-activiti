@@ -158,9 +158,17 @@ public interface ActivitiConstant {
     String MESSAGE_DELEGATE_CONTENT = "被委托待审批";
 
     /**
-     * 执行任务用户类型
+     * 候选
      */
-    String EXECUTOR_TYPE = "actualExecutor";
+    String EXECUTOR_candidate = "candidate";
+    /**
+     * 执行任务用户类型 - 通过
+     */
+    String EXECUTOR_TYPE_p = "actualExecutor_p";
+    /**
+     * 执行任务用户类型 - 驳回
+     */
+    String EXECUTOR_TYPE_b = "actualExecutor_b";
 
     /**
      * 删除理由前缀

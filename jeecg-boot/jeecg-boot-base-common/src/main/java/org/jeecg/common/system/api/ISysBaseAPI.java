@@ -1,15 +1,14 @@
 package org.jeecg.common.system.api;
 
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
-
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import org.jeecg.common.system.vo.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: 底层共通业务API，提供其他独立模块调用
@@ -33,7 +32,12 @@ public interface ISysBaseAPI {
 	 * @return
 	 */
 	public LoginUser getUserByName(String username);
-	
+	/**
+	 * 根据用户姓名查询用户信息  模糊查询 realname || username
+	 * @param name
+	 * @return
+	 */
+	public List<LoginUser> getUsersByName(String name);
 	/**
 	  * 根据用户id查询用户信息
 	 * @param id
@@ -114,6 +118,16 @@ public interface ISysBaseAPI {
 	 * @param msgContent  消息内容
 	 */
 	public void sendSysAnnouncement(String fromUser,String toUser,String title, String msgContent);
+	/**
+	 * 发送系统消息
+	 * @param actBusId 流程业务id
+	 * @param fromUser 发送人(用户登录账户)
+	 * @param fromUser 发送人(用户登录账户)
+	 * @param toUser  发送给(用户登录账户)
+	 * @param title  消息主题
+	 * @param msgContent  消息内容
+	 */
+	public void sendSysAnnouncement_act(String actBusId, String fromUser,String toUser,String title, String msgContent);
 
 	/**
 	 * 发送系统消息

@@ -3,6 +3,10 @@
 <mapper namespace="org.jeecg.modules.system.mapper.SysUserMapper">
 
 	<!-- 根据用户名查询 -->
+	<select id="getUsersByName" resultType="org.jeecg.common.system.vo.LoginUser">
+		select * from  sys_user  where (realname like '%${name}%' or username like '%${name}%') and del_flag = 0
+	</select>
+	<!-- 根据用户名查询 -->
 	<select id="getUserByName" resultType="org.jeecg.modules.system.entity.SysUser">
 		select * from  sys_user  where username = #{username} and del_flag = 0
 	</select>
@@ -45,7 +49,7 @@
 			and username = #{username}
 		</if>
 	</select>
-	
+
 	<!--  修改用户部门code -->
 	<update id="updateUserDepart">
 		UPDATE sys_user SET org_code = #{orgCode} where username = #{username}
@@ -55,7 +59,7 @@
 	<select id="getUserByPhone"  resultType="org.jeecg.modules.system.entity.SysUser">
 		select * from  sys_user  where phone = #{phone} and del_flag = 0
 	</select>
-	
+
 	<!-- 根据邮箱查询用户信息 -->
 	<select id="getUserByEmail" resultType="org.jeecg.modules.system.entity.SysUser">
 	select * from  sys_user  where email = #{email} and del_flag = 0
@@ -83,19 +87,18 @@
 	<!-- 根据 orgCode 查询用户，包括子部门下的用户 -->
 	<select id="getUserByOrgCode" resultType="org.jeecg.modules.system.model.SysUserSysDepartModel">
 		SELECT
-			sys_user.id AS id,
-			sys_user.realname AS realname,
-			sys_user.avatar AS avatar,
-			sys_user.work_no AS workNo,
-			sys_user.post AS post,
-			sys_user.telephone AS telephone,
-			sys_user.email AS email,
-			sys_user.phone AS phone,
-			sys_depart.id AS departId,
-			sys_depart.depart_name AS departName
+		sys_user.id AS id,
+		sys_user.realname AS realname,
+		sys_user.work_no AS workNo,
+		sys_user.post AS post,
+		sys_user.telephone AS telephone,
+		sys_user.email AS email,
+		sys_user.phone AS phone,
+		sys_depart.id AS departId,
+		sys_depart.depart_name AS departName
 		<include refid="getUserByOrgCodeFromSql"/>
 		ORDER BY
-			sys_depart.org_code ASC
+		sys_depart.org_code ASC
 	</select>
 
 	<!-- 查询 getUserByOrgCode 的总数-->
@@ -143,8 +146,8 @@
 		DELETE FROM sys_user WHERE del_flag = 1 AND id IN (${userIds})
 	</delete>
 
-    <!-- 更新空字符串为null -->
-    <update id="updateNullByEmptyString">
+	<!-- 更新空字符串为null -->
+	<update id="updateNullByEmptyString">
         UPDATE sys_user SET ${fieldName} = NULL WHERE ${fieldName} = ''
     </update>
 

@@ -22,6 +22,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.constant.CacheConstant;
 import org.jeecg.common.constant.CommonConstant;
@@ -136,7 +137,14 @@ public class SysBaseApiImpl implements ISysBaseAPI {
 		BeanUtils.copyProperties(sysUser, loginUser);
 		return loginUser;
 	}
-	
+	@Override
+	public List<LoginUser> getUsersByName(String name) {
+		if(oConvertUtils.isEmpty(name)) {
+			return Lists.newArrayList();
+		}
+		List<LoginUser> sysUsers = userMapper.getUsersByName(name);
+		return sysUsers;
+	}
 	@Override
 	public LoginUser getUserById(String id) {
 		if(oConvertUtils.isEmpty(id)) {
@@ -211,7 +219,44 @@ public class SysBaseApiImpl implements ISysBaseAPI {
 	public void sendSysAnnouncement(String fromUser, String toUser, String title, String msgContent) {
 		this.sendSysAnnouncement(fromUser, toUser, title, msgContent, CommonConstant.MSG_CATEGORY_2);
 	}
-
+	@Override
+	public void sendSysAnnouncement_act(String actBusId,String fromUser, String toUser, String title, String msgContent) {
+		SysAnnouncement announcement = new SysAnnouncement();
+		announcement.setActBusId(actBusId);
+		announcement.setTitile(title);
+		announcement.setMsgContent(msgContent);
+		announcement.setSender(fromUser);
+		announcement.setPriority(CommonConstant.PRIORITY_M);
+		announcement.setMsgType(CommonConstant.MSG_TYPE_UESR);
+		announcement.setSendStatus(CommonConstant.HAS_SEND);
+		announcement.setSendTime(new Date());
+		announcement.setMsgCategory(CommonConstant.MSG_CATEGORY_2);
+		announcement.setDelFlag(String.valueOf(CommonConstant.DEL_FLAG_0));
+		sysAnnouncementMapper.insert(announcement);
+		// 2.插入用户通告阅读标记表记录
+		String userId = toUser;
+		String[] userIds = userId.split(",");
+		String anntId = announcement.getId();
+		for(int i=0;i<userIds.length;i++) {
+			if(oConvertUtils.isNotEmpty(userIds[i])) {
+				SysUser sysUser = userMapper.getUserByName(userIds[i]);
+				if(sysUser==null) {
+					continue;
+				}
+				SysAnnouncementSend announcementSend = new SysAnnouncementSend();
+				announcementSend.setAnntId(anntId);
+				announcementSend.setUserId(sysUser.getId());
+				announcementSend.setReadFlag(CommonConstant.NO_READ_FLAG);
+				sysAnnouncementSendMapper.insert(announcementSend);
+				JSONObject obj = new JSONObject();
+				obj.put(WebsocketConst.MSG_CMD, WebsocketConst.CMD_USER);
+				obj.put(WebsocketConst.MSG_USER_ID, sysUser.getId());
+				obj.put(WebsocketConst.MSG_ID, announcement.getId());
+				obj.put(WebsocketConst.MSG_TXT, announcement.getTitile());
+				webSocket.sendOneMessage(sysUser.getId(), obj.toJSONString());
+			}
+		}
+	}
 	@Override
 	public void sendSysAnnouncement(String fromUser, String toUser, String title, String msgContent, String setMsgCategory) {
 		SysAnnouncement announcement = new SysAnnouncement();

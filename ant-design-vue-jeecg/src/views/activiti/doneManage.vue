@@ -51,7 +51,7 @@
               <span> {{t}} </span>
             </template>
           </a-table-column>
-          <a-table-column title="委托代办人" dataIndex="owner"  :width="130" align="center">
+          <a-table-column title="委托人" dataIndex="owner"  :width="130" align="center">
             <template slot-scope="t,r,i">
               <span> {{t}} </span>
             </template>
@@ -182,7 +182,7 @@ export default {
     },
     getDataList() {
       this.loading = true;
-      this.postFormAction(this.url.doneList,this.searchForm).then(res => {
+      this.getAction(this.url.doneList,this.searchForm).then(res => {
         this.loading = false;
         if (res.success) {
           this.data = res.result||[];

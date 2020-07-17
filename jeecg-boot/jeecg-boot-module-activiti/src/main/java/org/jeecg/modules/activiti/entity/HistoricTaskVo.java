@@ -7,6 +7,7 @@ import org.activiti.engine.history.HistoricTaskInstance;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author pmc
@@ -68,6 +69,10 @@ public class HistoricTaskVo {
     private String tableName;
 
     private List<Assignee> assignees;
+    private String title;
+    private Integer status;
+    private Integer result;
+    private Map dataMap;
 
     public HistoricTaskVo(HistoricTaskInstance task){
         this.id = task.getId();

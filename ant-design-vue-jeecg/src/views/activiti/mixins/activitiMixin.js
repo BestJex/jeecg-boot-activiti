@@ -1,8 +1,9 @@
-import { filterObj } from '@/utils/util';
-import { deleteAction, getAction,downFile } from '@/api/manage'
+import {filterObj} from '@/utils/util';
+import {deleteAction, downFile, getAction} from '@/api/manage'
 import Vue from 'vue'
-import { ACCESS_TOKEN } from "@/store/mutation-types"
+import {ACCESS_TOKEN} from "@/store/mutation-types"
 import JEllipsis from '@/components/jeecg/JEllipsis'
+
 export const activitiMixin = {
   components: {
     JEllipsis
@@ -14,7 +15,7 @@ export const activitiMixin = {
     }
   },
   computed:{
-    /*所有的流程表单，组件化注册，在此维护*/
+    /*todo 所有的流程表单，组件化注册，在此维护*/
     allFormComponent:function(){
       return [
         {

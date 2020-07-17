@@ -59,6 +59,10 @@ public class ActZprocess {
 	@Excel(name = "所属分类", width = 15)
     @ApiModelProperty(value = "所属分类")
 	private String categoryId;
+	/**流程类目*/
+	private String typeId;
+	/**排序*/
+	private Integer sort;
 	/**部署id*/
 	@Excel(name = "部署id", width = 15)
     @ApiModelProperty(value = "部署id")

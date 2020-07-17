@@ -31,6 +31,8 @@ public class ActNode {
 	@TableId(type = IdType.ID_WORKER_STR)
     @ApiModelProperty(value = "id")
 	private String id;
+	/**流程定义id*/
+	private String procDefId;
 	/**createBy*/
 	@Excel(name = "createBy", width = 15)
     @ApiModelProperty(value = "createBy")

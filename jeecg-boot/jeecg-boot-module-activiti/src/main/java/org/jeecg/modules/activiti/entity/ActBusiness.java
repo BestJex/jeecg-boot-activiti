@@ -33,6 +33,8 @@ public class ActBusiness {
 	/**表单路由*/
 	@TableField(exist=false)
 	private String routeName;
+	@TableField(exist=false)
+	private Map dataMap;
 	/**流程名称*/
 	@TableField(exist=false)
     private String processName;
@@ -42,27 +44,22 @@ public class ActBusiness {
 	private String id;
 	/**createBy*/
 	@Excel(name = "createBy", width = 15)
-    @ApiModelProperty(value = "createBy")
 	private String createBy;
 	/**createTime*/
 	@Excel(name = "createTime", width = 20, format = "yyyy-MM-dd HH:mm:ss")
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
-    @ApiModelProperty(value = "createTime")
 	private Date createTime;
 	/**delFlag*/
 	@Excel(name = "delFlag", width = 15)
-    @ApiModelProperty(value = "delFlag")
 	private Integer delFlag;
 	/**updateBy*/
 	@Excel(name = "updateBy", width = 15)
-    @ApiModelProperty(value = "updateBy")
 	private String updateBy;
 	/**updateTime*/
 	@Excel(name = "updateTime", width = 20, format = "yyyy-MM-dd HH:mm:ss")
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
-    @ApiModelProperty(value = "updateTime")
 	private Date updateTime;
 	/**流程定义id*/
 	@Excel(name = "流程定义id", width = 15)
@@ -74,64 +71,62 @@ public class ActBusiness {
 	private String procInstId;
 	/**结果状态 0未提交默认 1处理中 2通过 3驳回*/
 	@Excel(name = "结果状态 0未提交默认 1处理中 2通过 3驳回", width = 15)
-    @ApiModelProperty(value = "结果状态 0未提交默认 1处理中 2通过 3驳回")
 	private Integer result ;
 	/**状态 0草稿默认 1处理中 2结束*/
 	@Excel(name = "状态 0草稿默认 1处理中 2结束", width = 15)
-    @ApiModelProperty(value = "状态 0草稿默认 1处理中 2结束")
 	private Integer status ;
 	/**关联表的数据id*/
 	@Excel(name = "关联表id", width = 15)
-    @ApiModelProperty(value = "关联表id")
 	private String tableId;
 	/**申请标题*/
 	@Excel(name = "申请标题", width = 15)
-    @ApiModelProperty(value = "申请标题")
 	private String title;
 	/**创建用户id*/
 	@Excel(name = "创建用户id", width = 15)
-    @ApiModelProperty(value = "创建用户id")
 	private String userId;
 	/**提交申请时间*/
 	@Excel(name = "提交申请时间", width = 20, format = "yyyy-MM-dd HH:mm:ss")
 	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
-    @ApiModelProperty(value = "提交申请时间")
 	private Date applyTime;
 	/**历史标记*/
 	@Excel(name = "历史标记", width = 15)
-    @ApiModelProperty(value = "历史标记")
 	private Boolean isHistory;
 	/**数据表名*/
 	@Excel(name = "数据表名", width = 15)
-    @ApiModelProperty(value = "数据表名")
 	private String tableName;
 
 
 /**分配用户username*/
 	@TableField(exist=false)
+	@ApiModelProperty(value = "审批人（用户名），多个,号相连")
 	private String assignees;
 	/*任务优先级 默认0   0普通1重要2紧急*/
 	@TableField(exist=false)
-	@ApiModelProperty(value = "任务优先级 默认0")
+	@ApiModelProperty(value = "任务优先级 默认0 0普通1重要2紧急")
 	private Integer priority = 0;
 /**当前任务*/
 	@TableField(exist=false)
 	private String currTaskName;
 /**第一个节点是否为网关*/
 	@TableField(exist=false)
+	@ApiModelProperty(value = "第一个节点是否为网关")
 	private Boolean firstGateway = false;
 /**是否发送站内消息*/
+	@ApiModelProperty(value = "是否发送站内消息")
 	@TableField(exist=false)
 	private Boolean sendMessage;
 /**是否发送短信通知*/
 	@TableField(exist=false)
+	@ApiModelProperty(value = "是否发送短信通知-暂无用")
 	private Boolean sendSms;
 /**是否发送邮件通知*/
 	@TableField(exist=false)
+	@ApiModelProperty(value = "是否发送邮件通知-暂无用")
 	private Boolean sendEmail;
 /**流程设置参数*/
 	@JsonIgnore
 	@TableField(exist=false)
-	private Map<String, Object> params = new HashMap<>(16);
+	@ApiModelProperty(value = "流程设置参数")
+	private Map<String, Object> params = new HashMap<>();
 }

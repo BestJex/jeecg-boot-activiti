@@ -21,7 +21,9 @@ create table act_z_process
     version        int          null comment '版本',
     business_table varchar(255) null comment '关联业务表名',
     route_name     varchar(255) null comment '关联前端表单路由名',
-    roles          varchar(225) null comment '授权的角色'
+    roles          varchar(225) null comment '授权的角色',
+    type_id        varchar(50) null comment '流程类目',
+    sort           int null comment '排序'
 )
     CHARSET=utf8 comment '流程定义扩展表';
 create table act_z_business
@@ -55,9 +57,12 @@ create table act_z_node
     update_time datetime     null,
     node_id     varchar(255) null comment '节点id',
     type        varchar(255) null comment '节点关联类型 0角色 1用户 2部门',
-    relate_id   varchar(255) null comment '关联其他表id'
+    relate_id   varchar(255) null comment '关联其他表id',
+    proc_def_id   varchar(50) null comment '流程定义id'
 ) CHARSET=utf8 comment '流程节点扩展表';
 
+alter table sys_announcement
+    add act_bus_id varchar(50) null comment '流程业务id';
 
 
 

@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.activiti.engine.repository.Model;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.api.vo.Result;
+import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.activiti.entity.ActNode;
 import org.jeecg.modules.activiti.entity.ActZprocess;
@@ -27,16 +29,15 @@ import org.jeecg.modules.activiti.service.Impl.ActNodeServiceImpl;
 import org.jeecg.modules.activiti.service.Impl.ActZprocessServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/activiti_process")
 @Slf4j
 @Transactional
+@Api(tags = "流程")
 public class ActivitiProcessController {
     @Autowired
     private RepositoryService repositoryService;
@@ -56,37 +58,39 @@ public class ActivitiProcessController {
     @Autowired
     private ActBusinessServiceImpl actBusinessService;
 
-    @RequestMapping("/listData")
-    public Result listData( HttpServletRequest request){
+    @AutoLog(value = "流程-获取可用流程")
+    @ApiOperation(value="流程-获取可用流程", notes="获取可用流程")
+    @RequestMapping(value = "/listData" ,method = RequestMethod.GET)
+    public Result listData( @ApiParam(value = "流程名称" )String lcmc,
+                            @ApiParam(value = "流程key" )String lckey,
+                            @ApiParam(value = "是否最新" )Boolean zx,
+                            @ApiParam(value = "流程状态 部署后默认1激活" )String status,
+                            @ApiParam(value = "如果此项不为空，则会过滤当前用户的角色权限" )Boolean roles){
         log.info("-------------流程列表-------------");
-        String lcmc = request.getParameter("lcmc");
-        String lckey = request.getParameter("lckey");
-        String zx = request.getParameter("zx");
-        String status = request.getParameter("status");
         LambdaQueryWrapper<ActZprocess> wrapper = new LambdaQueryWrapper<ActZprocess>();
-        wrapper.orderByAsc(ActZprocess::getProcessKey).orderByDesc(ActZprocess::getVersion);
+        wrapper.orderByAsc(ActZprocess::getSort).orderByDesc(ActZprocess::getVersion);
         if (StrUtil.isNotBlank(lcmc)){
             wrapper.like(ActZprocess::getName, lcmc);
         }
         if (StrUtil.isNotBlank(lckey)){
             wrapper.like(ActZprocess::getProcessKey, lckey);
         }
-        if (StrUtil.equals(zx,"true")){
+        if (zx!=null&&zx){
             wrapper.eq(ActZprocess::getLatest, 1);
         }
         if (StrUtil.isNotBlank(status)){
             wrapper.eq(ActZprocess::getStatus, status);
         }
         List<ActZprocess> list = actZprocessService.list(wrapper);
-        if (StrUtil.isNotBlank(request.getParameter("roles"))){ //过滤角色
+        if (roles!=null&&roles){ //过滤角色
             LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
             List<String> roleByUserName = actNodeService.getRoleByUserName(sysUser.getUsername());
             list = list.stream().filter(p->{
-                String roles = p.getRoles();
-                if (StrUtil.isBlank(roles)) {
+                String pRoles = p.getRoles();
+                if (StrUtil.isBlank(pRoles)) {
                     return true; //未设置授权的所有人都能用
                 }else {
-                    String[] split = roles.split(",");
+                    String[] split = pRoles.split(",");
                     for (String role : split) {
                         if (roleByUserName.contains(role)){
                             return true;
@@ -222,6 +226,7 @@ public class ActivitiProcessController {
             Collection<FlowElement> elements = process.getFlowElements();
             for(FlowElement element : elements){
                 ProcessNodeVo node = new ProcessNodeVo();
+                node.setProcDefId(id);
                 node.setId(element.getId());
                 node.setTitle(element.getName());
                 if(element instanceof StartEvent){
@@ -264,13 +269,14 @@ public class ActivitiProcessController {
      * @return
      */
     @RequestMapping(value = "/editNodeUser", method = RequestMethod.POST)
-    public Result editNodeUser(String nodeId, String userIds, String roleIds, String departmentIds, Boolean chooseDepHeader, Boolean chooseSponsor){
+    public Result editNodeUser(String nodeId,String procDefId, String userIds, String roleIds, String departmentIds, Boolean chooseDepHeader, Boolean chooseSponsor){
 
         // 删除其关联权限
         actNodeService.deleteByNodeId(nodeId);
         // 分配新用户
         for(String userId : userIds.split(",")){
             ActNode actNode = new ActNode();
+            actNode.setProcDefId(procDefId);
             actNode.setNodeId(nodeId);
             actNode.setRelateId(userId);
             actNode.setType(1);
@@ -279,6 +285,7 @@ public class ActivitiProcessController {
         // 分配新角色
         for(String roleId : roleIds.split(",")){
             ActNode actNode = new ActNode();
+            actNode.setProcDefId(procDefId);
             actNode.setNodeId(nodeId);
             actNode.setRelateId(roleId);
             actNode.setType(0);
@@ -287,6 +294,7 @@ public class ActivitiProcessController {
         // 分配新部门
         for(String departmentId : departmentIds.split(",")){
             ActNode actNode = new ActNode();
+            actNode.setProcDefId(procDefId);
             actNode.setNodeId(nodeId);
             actNode.setRelateId(departmentId);
             actNode.setType(2);
@@ -294,12 +302,14 @@ public class ActivitiProcessController {
         }
         if(chooseDepHeader!=null&&chooseDepHeader){
             ActNode actNode = new ActNode();
+            actNode.setProcDefId(procDefId);
             actNode.setNodeId(nodeId);
             actNode.setType(4);
             actNodeService.save(actNode);
         }
         if(chooseSponsor!=null&&chooseSponsor){
             ActNode actNode = new ActNode();
+            actNode.setProcDefId(procDefId);
             actNode.setNodeId(nodeId);
             actNode.setType(3);
             actNodeService.save(actNode);
@@ -308,7 +318,7 @@ public class ActivitiProcessController {
     }
     @RequestMapping(value = "/getNextNode", method = RequestMethod.GET)
     @ApiOperation(value = "通过当前节点定义id获取下一个节点")
-    public Result getNextNode(@ApiParam("当前节点定义id")  String procDefId,
+    public Result getNextNode(@ApiParam("流程定义id")  String procDefId,
                                              @ApiParam("当前节点定义id")  String currActId){
         ProcessNodeVo node = actZprocessService.getNextNode(procDefId, currActId);
         return Result.ok(node);

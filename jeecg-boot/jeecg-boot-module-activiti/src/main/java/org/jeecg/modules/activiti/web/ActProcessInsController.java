@@ -2,7 +2,9 @@ package org.jeecg.modules.activiti.web;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.engine.*;
 import org.activiti.engine.history.HistoricIdentityLink;
@@ -12,6 +14,7 @@ import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.activiti.engine.task.Task;
 import org.jeecg.common.api.vo.Result;
+import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.api.ISysBaseAPI;
 import org.jeecg.common.system.vo.ComboModel;
 import org.jeecg.modules.activiti.entity.*;
@@ -34,6 +37,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/actProcessIns")
 @Transactional
+@Api(tags="流程")
 public class ActProcessInsController {
 
     @Autowired
@@ -61,8 +65,10 @@ public class ActProcessInsController {
     private ProcessEngineConfiguration processEngineConfiguration;
 
 /*通过流程定义id获取第一个任务节点*/
+    @AutoLog(value = "流程-通过流程定义id获取第一个任务节点")
+    @ApiOperation(value="流程-通过流程定义id获取第一个任务节点", notes="通过流程定义id获取第一个任务节点，包含可供选择的审批人、网关信息等")
     @RequestMapping(value = "/getFirstNode", method = RequestMethod.GET)
-    public Result getFirstNode(String procDefId){
+    public Result getFirstNode(@ApiParam(value = "流程定义Id" ,required = true) String procDefId){
         ProcessNodeVo node = actZprocessService.getFirstNode(procDefId);
         return Result.ok(node);
     }
@@ -140,9 +146,11 @@ public class ActProcessInsController {
             // 关联业务状态结束
             ProcessInstance pi = runtimeService.createProcessInstanceQuery().processInstanceId(id).singleResult();
             ActBusiness actBusiness = actBusinessService.getById(pi.getBusinessKey());
-            actBusiness.setStatus(ActivitiConstant.STATUS_TO_APPLY);
-            actBusiness.setResult(ActivitiConstant.RESULT_TO_SUBMIT);
-            actBusinessService.updateById(actBusiness);
+            if (actBusiness!=null){
+                actBusiness.setStatus(ActivitiConstant.STATUS_TO_APPLY);
+                actBusiness.setResult(ActivitiConstant.RESULT_TO_SUBMIT);
+                actBusinessService.updateById(actBusiness);
+            }
             runtimeService.deleteProcessInstance(id, ActivitiConstant.DELETE_PRE+reason);
         }
         return Result.ok("删除成功");
@@ -240,7 +248,6 @@ public class ActProcessInsController {
         return Result.ok(list);
     }
     @RequestMapping(value = "/delHistoricInsByIds/{ids}")
-    @ApiOperation(value = "通过id删除已结束的实例")
     public Result<Object> delHistoricInsByIds(@PathVariable String ids){
 
         for(String id : ids.split(",")){

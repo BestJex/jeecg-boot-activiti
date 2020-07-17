@@ -31,4 +31,6 @@ public interface ActNodeMapper extends BaseMapper<ActNode> {
     List<LoginUser> findUserByRoleId(@Param("id") String id);
     @Select("select * from sys_user where id in (select user_id from sys_user_depart where dep_id = #{id})")
     List<LoginUser> findUserDepartmentId(@Param("id") String id);
+    @Select("select * from act_z_node where node_id = #{nodeId}")
+    List<ActNode> findByNodeId(@Param("nodeId") String nodeId);
 }

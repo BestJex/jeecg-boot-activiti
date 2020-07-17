@@ -1,12 +1,13 @@
 package org.jeecg.modules.system.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
+import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.system.entity.SysUser;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.jeecg.modules.system.model.SysUserSysDepartModel;
 import org.jeecg.modules.system.vo.SysUserDepVo;
 
@@ -22,7 +23,7 @@ import java.util.List;
  */
 public interface SysUserMapper extends BaseMapper<SysUser> {
 	/**
-	  * 通过用户账号查询用户信息
+	 * 通过用户账号查询用户信息
 	 * @param username
 	 * @return
 	 */
@@ -58,22 +59,22 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
 	 * @return
 	 */
 	IPage<SysUser> getUserByRoleId(Page page, @Param("roleId") String roleId, @Param("username") String username);
-	
+
 	/**
 	 * 根据用户名设置部门ID
 	 * @param username
 	 * @param departId
 	 */
 	void updateUserDepart(@Param("username") String username,@Param("orgCode") String orgCode);
-	
+
 	/**
 	 * 根据手机号查询用户信息
 	 * @param phone
 	 * @return
 	 */
 	public SysUser getUserByPhone(@Param("phone") String phone);
-	
-	
+
+
 	/**
 	 * 根据邮箱查询用户信息
 	 * @param email
@@ -92,27 +93,27 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
 	List<SysUserSysDepartModel> getUserByOrgCode(IPage page, @Param("orgCode") String orgCode, @Param("userParams") SysUser userParams);
 
 
-    /**
-     * 查询 getUserByOrgCode 的Total
-     *
-     * @param orgCode
-     * @param userParams 用户查询条件，可为空
-     * @return
-     */
-    Integer getUserByOrgCodeTotal(@Param("orgCode") String orgCode, @Param("userParams") SysUser userParams);
+	/**
+	 * 查询 getUserByOrgCode 的Total
+	 *
+	 * @param orgCode
+	 * @param userParams 用户查询条件，可为空
+	 * @return
+	 */
+	Integer getUserByOrgCodeTotal(@Param("orgCode") String orgCode, @Param("userParams") SysUser userParams);
 
-    /**
-     * @Author scott
-     * @Date 2019/12/13 16:10
-     * @Description: 批量删除角色与用户关系
-     */
+	/**
+	 * @Author scott
+	 * @Date 2019/12/13 16:10
+	 * @Description: 批量删除角色与用户关系
+	 */
 	void deleteBathRoleUserRelation(@Param("roleIdArray") String[] roleIdArray);
 
-    /**
-     * @Author scott
-     * @Date 2019/12/13 16:10
-     * @Description: 批量删除角色与权限关系
-     */
+	/**
+	 * @Author scott
+	 * @Date 2019/12/13 16:10
+	 * @Description: 批量删除角色与权限关系
+	 */
 	void deleteBathRolePermissionRelation(@Param("roleIdArray") String[] roleIdArray);
 
 	/**
@@ -130,13 +131,15 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
 	 */
 	int deleteLogicDeleted(@Param("userIds") String userIds);
 
-    /** 更新空字符串为null【此写法有sql注入风险，禁止随便用】 */
-    int updateNullByEmptyString(@Param("fieldName") String fieldName);
-    
+	/** 更新空字符串为null【此写法有sql注入风险，禁止随便用】 */
+	int updateNullByEmptyString(@Param("fieldName") String fieldName);
+
 	/**
 	 *  根据部门Ids,查询部门下用户信息
 	 * @param departIds
 	 * @return
 	 */
 	List<SysUser> queryByDepIds(@Param("departIds")List<String> departIds,@Param("username") String username);
+
+	List<LoginUser> getUsersByName(@Param("name") String name);
 }

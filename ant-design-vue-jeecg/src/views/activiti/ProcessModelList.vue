@@ -136,7 +136,7 @@
     </a-table>
     <!-- table区域-end -->
     <!--编辑-->
-    <a-modal
+    <a-modal  width="900px"
       :confirmLoading="confirmLoading"
       title="编辑流程"
       :visible="editObj.visible"
@@ -148,6 +148,12 @@
           <component :is="LcDict" :trigger-change="true" v-decorator="[ 'categoryId', {initialValue:editObj.categoryId, rules: [{ required: true, message: '不能为空' }] },]"
                        placeholder="请选择流程分类" dictCode="bpm_process_type" ></component>
         </a-form-item>
+        <a-form-item :label-col="labelCol" :wrapper-col="wrapperCol" label="流程类目(app使用)" >
+          <j-tree-dict placeholder="请选择流程类目" parentCode="A01"
+                       :trigger-change="true" v-decorator="[ 'typeId', {initialValue:editObj.typeId, rules: [{ required: true, message: '不能为空' }] },]"
+          >
+          </j-tree-dict>
+        </a-form-item>
         <a-form-item :label-col="labelCol" :wrapper-col="wrapperCol" label="关联表单" >
           <a-select @change="change_routeName" placeholder="请选择关联表单" :trigger-change="true" v-decorator="[ 'routeName', {initialValue:editObj.routeName, rules: [{ required: true, message: '不能为空' }] },]">
             <a-select-option value="">请选择</a-select-option>
@@ -157,10 +163,13 @@
               </span>
             </a-select-option>
           </a-select>
-          <a href="javascrip:void(0)" @click="viewForm">预览表单</a>
+          <a href="javascrip:void(0)" @click="viewForm()">预览表单</a>
         </a-form-item>
         <a-form-item :label-col="labelCol" :wrapper-col="wrapperCol" label="角色授权" >
           <j-select-role placeholder="不选择则所有人可用" v-decorator="[ 'roles', {initialValue:editObj.roles, rules: []}]"/>
+        </a-form-item>
+        <a-form-item :label-col="labelCol" :wrapper-col="wrapperCol" label="排序" >
+          <a-input-number  v-decorator="[ 'sort', {initialValue:editObj.sort, rules: []}]" placeholder="排序"/>
         </a-form-item>
         <a-form-item :label-col="labelCol" :wrapper-col="wrapperCol" label="备注描述" >
           <a-textarea  v-decorator="[ 'description', {initialValue:editObj.description, rules: []}]" placeholder="备注描述" :autoSize="{ minRows: 3, maxRows: 5 }" />
@@ -270,6 +279,7 @@
   import { deleteAction, getAction,downFile } from '@/api/manage'
   import pick from "lodash.pick";
   import JTreeSelect from '@/components/jeecg/JTreeSelect'
+  import JTreeDict from '@/components/jeecg/JTreeDict'
   import {initDictOptions, filterDictText} from '@/components/dict/JDictSelectUtil'
   import JSelectUserByDep from '@/components/jeecgbiz/JSelectUserByDep'
   import JSelectRole from '@/components/jeecgbiz/JSelectRole'
@@ -279,7 +289,7 @@
     mixins:[activitiMixin,JeecgListMixin],
     components: {
       JEllipsis,JSelectUserByDep,JSelectRole,JSelectDepart
-      ,JTreeSelect
+      ,JTreeSelect,JTreeDict
     },
     data () {
       return {
@@ -441,6 +451,7 @@
         }
         _this.confirmLoading = true;
         this.spry.nodeId = this.editNode.id;
+        this.spry.procDefId = this.editNode.procDefId;
         this.postFormAction(_this.url.editNodeUser,this.spry).then(res => {
           if (res.success) {
             _this.$message.success("操作成功");
@@ -451,8 +462,9 @@
           }
         }).finally(() => _this.confirmLoading = false);
       },
+      /*节点设置*/
       getNodeData(row){
-        var _this = this;
+        let _this = this;
         _this.updateRow = row;
         _this.postFormAction(_this.url.getProcessNode,{
           id:row.id
@@ -462,7 +474,8 @@
             _this.nodeList = res.result||[];
             console.log("_this.nodeList",_this.nodeList);
             if (_this.nodeList.length>0){
-              _this.editNode = _this.nodeList[0];
+              _this.editNode = _this.nodeList[_this.current];
+              console.log(_this.current,_this.editNode)
               _this.showProcessNodeEdit = true;
             }
           }else {
@@ -513,6 +526,7 @@
           return;
         }
         let formComponent = this.getFormComponent(routeName);
+        console.log(formComponent)
         this.lcModa.formComponent = formComponent.component;
         this.lcModa.title = '流程表单预览：'+formComponent.text;
         this.lcModa.visible = true;
@@ -586,7 +600,7 @@
       /*查看流程图片*/
       showResource(row) {
           this.viewTitle = "流程图片预览(" + row.diagramName + ")";
-          this.diagramUrl = `${this.doMian}${this.url.img}?id=${row.id}`;
+          this.diagramUrl = `${window._CONFIG['domianURL']}${this.url.img}?id=${row.id}`;
           this.viewImage = true;
       },
       /*删除模型*/

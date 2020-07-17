@@ -220,7 +220,7 @@
       createObjOk(e) {
         this.createObj.confirmLoading = true;
         this.updateObj.visible = true;
-        this.iframUrl = `${this.doMian}${this.url.create}?name=${this.createObj.name||""}&key=${this.createObj.key||""}&description=${this.createObj.description||""}`
+        this.iframUrl = `${window._CONFIG['domianURL']}${this.url.create}?name=${this.createObj.name||""}&key=${this.createObj.key||""}&description=${this.createObj.description||""}`
         this.createObj.visible = false;
         this.createObj.confirmLoading = false;
       },
@@ -231,7 +231,7 @@
           .loading('稍等。。。', 0.8)
           .then(() => {
             _this.createObj.confirmLoading = true;
-            _this.iframUrl = `${_this.doMian}${_this.url.update}${id}`;
+            _this.iframUrl = `${window._CONFIG['domianURL']}${_this.url.update}${id}`;
             _this.updateObj.visible = true;
             _this.createObj.confirmLoading = false;
           })

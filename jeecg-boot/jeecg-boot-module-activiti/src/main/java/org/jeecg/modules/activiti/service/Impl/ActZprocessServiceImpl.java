@@ -16,6 +16,7 @@ import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.activiti.engine.impl.pvm.PvmActivity;
 import org.activiti.engine.impl.pvm.PvmTransition;
 import org.activiti.engine.impl.pvm.process.ActivityImpl;
+import org.activiti.engine.impl.task.TaskDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.apache.shiro.SecurityUtils;
@@ -34,10 +35,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -120,7 +118,7 @@ public class ActZprocessServiceImpl extends ServiceImpl<ActZprocessMapper, ActZp
             throw new JeecgBootException("没有业务表单数据");
         }
         /*表单数据写入*/
-        Map<String, Object> busiData = actBusinessService.getBaseMapper().getBusiData(tableId, tableName);
+        Map<String, Object> busiData = actBusinessService.getBusiData(tableId, tableName);
         for (String key : busiData.keySet()) {
             params.put(key,busiData.get(key));
         }
@@ -184,11 +182,12 @@ public class ActZprocessServiceImpl extends ServiceImpl<ActZprocessMapper, ActZp
         msgMap.put("remark", "请进入待办栏，尽快处理！");
         /*流程催办模板*/
         String msgText = sysBaseAPI.parseTemplateByCode("bpm_cuiban", msgMap);
-        this.sendMessage(fromUser,toUser,title,msgText,sendMessage,sendSms,sendEmail);
+        this.sendMessage(act.getId(),fromUser,toUser,title,msgText,sendMessage,sendSms,sendEmail);
     }
 
     /**
      * 发消息
+     * @param actBusId 流程业务id
      * @param fromUser 发送人
      * @param toUser 接收人
      * @param title 标题
@@ -197,9 +196,9 @@ public class ActZprocessServiceImpl extends ServiceImpl<ActZprocessMapper, ActZp
      * @param sendSms 短信
      * @param sendEmail 邮件
      */
-    public void sendMessage(LoginUser fromUser, LoginUser toUser,String title,String msgText,  Boolean sendMessage, Boolean sendSms, Boolean sendEmail) {
+    public void sendMessage(String actBusId,LoginUser fromUser, LoginUser toUser,String title,String msgText,  Boolean sendMessage, Boolean sendSms, Boolean sendEmail) {
         if (sendMessage!=null&&sendMessage){
-            sysBaseAPI.sendSysAnnouncement(fromUser.getUsername(),toUser.getUsername(),title,msgText);
+            sysBaseAPI.sendSysAnnouncement_act(actBusId,fromUser.getUsername(),toUser.getUsername(),title,msgText);
         }
         //todo 以下需要购买阿里短信服务；设定邮件服务账号
         if (sendSms!=null&&sendSms&& StrUtil.isNotBlank(toUser.getPhone())){
@@ -246,8 +245,10 @@ public class ActZprocessServiceImpl extends ServiceImpl<ActZprocessMapper, ActZp
         // 判断获取部门负责人
         if(actNodeService.hasChooseDepHeader(nodeId)){
             List<LoginUser> allUser = actNodeService.queryAllUser();
-            LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
-            List<String> departIds = sysBaseAPI.getDepartIdsByUsername(loginUser.getUsername());
+            //申请人的部门负责人
+            String createBy = getUserByNodeid(nodeId);
+            List<String> departIds = sysBaseAPI.getDepartIdsByUsername(createBy);
+
             for (String departId : departIds) {
                 List<LoginUser> collect = allUser.stream().filter(u -> u.getDepartIds() != null && u.getDepartIds().indexOf(departId) > -1).collect(Collectors.toList());
                 users.addAll(collect);
@@ -255,11 +256,24 @@ public class ActZprocessServiceImpl extends ServiceImpl<ActZprocessMapper, ActZp
         }
         // 判断获取发起人
         if(actNodeService.hasChooseSponsor(nodeId)){
-            LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
-            users.add(loginUser);
+            String createBy = getUserByNodeid(nodeId);
+            LoginUser userByName = sysBaseAPI.getUserByName(createBy);
+            users.add(userByName);
         }
         users = users.stream().filter(u->StrUtil.equals("0",u.getDelFlag()+"")).collect(Collectors.toList());
         return users;
+    }
+
+    /**
+     * 根据节点id获取申请人
+     * @param nodeId
+     * @return
+     */
+    public String getUserByNodeid(String nodeId) {
+        ActNode actNode = actNodeService.getOne(new LambdaQueryWrapper<ActNode>().eq(ActNode::getNodeId, nodeId).last("limit 1"));
+        String procDefId = actNode.getProcDefId();
+        ActBusiness actBusiness = actBusinessService.getOne(new LambdaQueryWrapper<ActBusiness>().eq(ActBusiness::getProcDefId, procDefId).last("limit 1"));
+        return actBusiness.getCreateBy();
     }
 
     /**
@@ -330,7 +344,6 @@ public class ActZprocessServiceImpl extends ServiceImpl<ActZprocessMapper, ActZp
 
     public ProcessNodeVo getNextNode(String procDefId, String currActId) {
         ProcessNodeVo node = new ProcessNodeVo();
-
         // 当前执行节点id
         ProcessDefinitionEntity dfe = (ProcessDefinitionEntity) ((RepositoryServiceImpl)repositoryService).getDeployedProcessDefinition(procDefId);
         // 获取所有节点
@@ -354,6 +367,20 @@ public class ActZprocessServiceImpl extends ServiceImpl<ActZprocessMapper, ActZp
                 }else if("exclusiveGateway".equals(type)){
                     // 排他网关
                     node.setType(ActivitiConstant.NODE_TYPE_EG);
+                    ActivityImpl pvmActivity1 = (ActivityImpl) pvmActivity;
+                    /*流程定义Id*/
+                    String procInsId = "";
+                    /*定义变量*/
+                    Map<String, Object> vals = Maps.newHashMap();
+                    List<ActBusiness> actBbyProcDefId = actBusinessService.findByProcDefId(procDefId);
+                    if (CollUtil.isNotEmpty(actBbyProcDefId)){
+                        ActBusiness actBusiness = actBbyProcDefId.get(0);
+                        vals = actBusinessService.getApplyForm(actBusiness.getTableId(), actBusiness.getTableName());
+                        procInsId = actBusiness.getProcInstId();
+                    }
+                    TaskDefinition taskDefinition = actNodeService.nextTaskDefinition(pvmActivity1, pvmActivity1.getId(), vals, procInsId);
+                    List<LoginUser> users = getNodetUsers(taskDefinition.getKey());
+                    node.setUsers(removeDuplicate(users));
                 }else if("parallelGateway".equals(type)){
                     // 平行网关
                     node.setType(ActivitiConstant.NODE_TYPE_PG);

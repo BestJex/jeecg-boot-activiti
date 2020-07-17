@@ -53,7 +53,7 @@
               <span> {{t}} </span>
             </template>
           </a-table-column>
-          <a-table-column title="委托代办人" dataIndex="owner"  align="center" :width="150">
+          <a-table-column title="委托人" dataIndex="owner"  align="center" :width="150">
             <template slot-scope="t">
               <span> {{t}} </span>
             </template>
@@ -139,7 +139,7 @@
               mode="multiple"
               :loading="userLoading"
             >
-              <a-select-option v-for="(item, i) in assigneeList" :key="i" :value="item.id">{{item.username}}</a-select-option>
+              <a-select-option v-for="(item, i) in assigneeList" :key="i" :value="item.username">{{item.realname}}</a-select-option>
             </a-select>
           </a-form-item>
           <a-form-item label="下一审批人" v-show="isGateway">
@@ -163,7 +163,7 @@
                 mode="multiple"
                 :loading="userLoading"
               >
-                <a-select-option v-for="(item, i) in assigneeList" :key="i" :value="item.id">{{item.username}}</a-select-option>
+                <a-select-option v-for="(item, i) in assigneeList" :key="i" :value="item.username">{{item.realname}}</a-select-option>
               </a-select>
             </a-form-item>
           </div>
@@ -272,7 +272,7 @@ export default {
     loadData(){},
     getDataList() {
       this.loading = true;
-      this.postFormAction(this.url.todoList,this.searchForm).then(res => {
+      this.getAction(this.url.todoList,this.searchForm).then(res => {
         this.loading = false;
         if (res.success) {
           this.data = res.result||[];
@@ -404,7 +404,7 @@ export default {
       this.getAction(this.url.getNextNode,{procDefId:v.procDefId, currActId:v.key}).then(res => {
         this.userLoading = false;
         if (res.success) {
-          if (res.result.type == 3 || res.result.type == 4) {
+          if (res.result.type == 4) {
             this.isGateway = true;
             this.showAssign = false;
             this.error = "";
@@ -414,6 +414,7 @@ export default {
           if (res.result.users && res.result.users.length > 0) {
             this.error = "";
             this.assigneeList = res.result.users;
+            console.log(this.assigneeList)
             // 默认勾选
             let ids = [];
             res.result.users.forEach(e => {

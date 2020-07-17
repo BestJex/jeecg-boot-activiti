@@ -1,16 +1,18 @@
 package org.jeecg.modules.activiti.web;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.google.common.collect.Lists;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.activiti.engine.*;
 import org.activiti.engine.history.HistoricIdentityLink;
-import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricTaskInstance;
-import org.activiti.engine.history.HistoricTaskInstanceQuery;
 import org.activiti.engine.impl.interceptor.Command;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
@@ -24,8 +26,8 @@ import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
 import org.apache.shiro.SecurityUtils;
 import org.jeecg.common.api.vo.Result;
+import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.api.ISysBaseAPI;
-import org.jeecg.common.system.vo.ComboModel;
 import org.jeecg.common.system.vo.LoginUser;
 import org.jeecg.modules.activiti.entity.*;
 import org.jeecg.modules.activiti.service.Impl.ActBusinessServiceImpl;
@@ -45,6 +47,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/actTask")
 @Transactional
+@Api(tags = "流程")
 public class ActTaskController {
 
     @Autowired
@@ -71,8 +74,15 @@ public class ActTaskController {
     ISysBaseAPI sysBaseAPI;
 
     /*代办列表*/
-    @RequestMapping(value = "/todoList" )
-    public Result<Object> todoList(String name, String categoryId, Integer priority, HttpServletRequest request){
+    @AutoLog(value = "流程-代办列表")
+    @ApiOperation(value="流程-代办列表", notes="代办列表")
+    @RequestMapping(value = "/todoList" ,method = RequestMethod.GET)
+    public Result<Object> todoList(@ApiParam(value = "任务名称" )String name,
+                                   @ApiParam(value = "任务分类" )String categoryId,
+                                   @ApiParam(value = "优先级" )Integer priority,
+                                   @ApiParam(value = "创建开始时间" )String createTime_begin,
+                                   @ApiParam(value = "创建结束时间" )String createTime_end,
+                                   HttpServletRequest request){
         List<TaskVo> list = new ArrayList<>();
         LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
         String userId = sysUser.getUsername();
@@ -89,17 +99,49 @@ public class ActTaskController {
         if(priority!=null){
             query.taskPriority(priority);
         }
-        String createTime_begin = request.getParameter("createTime_begin");
-        String createTime_end = request.getParameter("createTime_end");
-        if(StrUtil.isNotBlank(createTime_begin)&&StrUtil.isNotBlank(createTime_end)){
+        if(StrUtil.isNotBlank(createTime_begin)){
             Date start = DateUtil.parse(createTime_begin);
-            Date end = DateUtil.parse(createTime_end);
             query.taskCreatedAfter(start);
+        }
+        if(StrUtil.isNotBlank(createTime_end)){
+            Date end = DateUtil.parse(createTime_end);
             query.taskCreatedBefore(DateUtil.endOfDay(end));
         }
-
+        //流程类型
+        String type = request.getParameter("type");
+        if (StrUtil.isNotBlank(type)){
+            List<String> deployment_idList = actBusinessService.getBaseMapper().deployment_idListByType(type);
+            if (deployment_idList.size()==0){
+                query.deploymentIdIn(Lists.newArrayList(""));
+            }else {
+                query.deploymentIdIn(deployment_idList);
+            }
+        }
+        String searchVal = request.getParameter("searchVal");
+        if (StrUtil.isNotBlank(searchVal)){
+            //搜索标题、申请人
+            List<LoginUser> usersByName = sysBaseAPI.getUsersByName(searchVal);
+            List<String> uNames = null;
+            if (usersByName.size()==0){
+                uNames = Lists.newArrayList("");
+            }else {
+                uNames = usersByName.stream().map(u->u.getUsername()).collect(Collectors.toList());
+            }
+            List<ActBusiness> businessList = actBusinessService.list(new LambdaQueryWrapper<ActBusiness>()
+                    .like(ActBusiness::getTitle, searchVal) //标题查询
+                    .or().in(ActBusiness::getUserId,uNames)
+            );
+            if (businessList.size()>0){
+                // 定义id
+                List<String> pids = businessList.stream().filter(act -> act.getProcInstId()!=null).map(act -> act.getProcInstId()).collect(Collectors.toList());
+                query.processInstanceIdIn(pids);
+            }else {
+                query.processInstanceIdIn(Lists.newArrayList(""));
+            }
+        }
         List<Task> taskList = query.list();
-
+        // 是否需要业务数据
+        String needData = request.getParameter("needData");
         // 转换vo
         taskList.forEach(e -> {
             TaskVo tv = new TaskVo(e);
@@ -129,13 +171,21 @@ public class ActTaskController {
             if(actBusiness!=null){
                 tv.setTableId(actBusiness.getTableId());
                 tv.setTableName(actBusiness.getTableName());
+                tv.setTitle(actBusiness.getTitle());
+                tv.setStatus(actBusiness.getStatus());
+                tv.setResult(actBusiness.getResult());
+                if (StrUtil.equals(needData,"true")){ // 需要业务数据
+                    Map<String, Object> applyForm = actBusinessService.getApplyForm(actBusiness.getTableId(), actBusiness.getTableName());
+                    tv.setDataMap(applyForm);
+                }
             }
-
             list.add(tv);
         });
         return Result.ok(list);
     }
     /*获取可返回的节点*/
+    @AutoLog(value = "流程-获取可返回的节点")
+    @ApiOperation(value="流程-获取可返回的节点", notes="获取可返回的节点")
     @RequestMapping(value = "/getBackList/{procInstId}", method = RequestMethod.GET)
     public Result<Object> getBackList(@PathVariable String procInstId){
 
@@ -160,6 +210,8 @@ public class ActTaskController {
         return Result.ok(newList);
     }
     /*任务节点审批 驳回至发起人*/
+    @AutoLog(value = "流程-任务节点审批 驳回至发起人")
+    @ApiOperation(value="流程-任务节点审批 驳回至发起人", notes="任务节点审批 驳回至发起人")
     @RequestMapping(value = "/back", method = RequestMethod.POST)
     public Result<Object> back(@ApiParam("任务id") @RequestParam String id,
                                @ApiParam("流程实例id") @RequestParam String procInstId,
@@ -182,18 +234,20 @@ public class ActTaskController {
         actBusinessService.updateById(actBusiness);
         // 异步发消息
         LoginUser sysUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
-        actZprocessService.sendMessage(sysUser,sysBaseAPI.getUserByName(actBusiness.getUserId()),ActivitiConstant.MESSAGE_BACK_CONTENT,
+        actZprocessService.sendMessage(actBusiness.getId(),sysUser,sysBaseAPI.getUserByName(actBusiness.getUserId()),ActivitiConstant.MESSAGE_BACK_CONTENT,
                 String.format("您的 【%s】 申请已被驳回！",actBusiness.getTitle()),sendMessage, sendSms, sendEmail);
         // 记录实际审批人员
         actBusinessService.insertHI_IDENTITYLINK(IdUtil.simpleUUID(),
-                ActivitiConstant.EXECUTOR_TYPE, sysUser.getUsername(), id, procInstId);
+                ActivitiConstant.EXECUTOR_TYPE_b, sysUser.getUsername(), id, procInstId);
         //修改业务表的流程字段
         actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"驳回");
         return Result.ok("操作成功");
     }
     /*流程流转历史*/
+    @AutoLog(value = "流程-流程流转历史")
+    @ApiOperation(value="流程-流程流转历史", notes="流程流转历史")
     @RequestMapping(value = "/historicFlow/{id}", method = RequestMethod.GET)
-    public Result<Object> historicFlow(@PathVariable String id){
+    public Result<Object> historicFlow(@ApiParam("实例Id")@PathVariable String id){
 
         List<HistoricTaskVo> list = new ArrayList<>();
 
@@ -212,13 +266,15 @@ public class ActTaskController {
             }
             List<HistoricIdentityLink> identityLinks = historyService.getHistoricIdentityLinksForTask(e.getId());
             // 获取实际审批用户id
-            String userId = actBusinessService.findUserIdByTypeAndTaskId(ActivitiConstant.EXECUTOR_TYPE, e.getId());
+            List<String> userIds_b = actBusinessService.findUserIdByTypeAndTaskId(ActivitiConstant.EXECUTOR_TYPE_b, e.getId());
+            List<String> userIds_p = actBusinessService.findUserIdByTypeAndTaskId(ActivitiConstant.EXECUTOR_TYPE_p, e.getId());
             for(HistoricIdentityLink hik : identityLinks){
                 // 关联候选用户（分配的候选用户审批人）
-                if("candidate".equals(hik.getType())&& StrUtil.isNotBlank(hik.getUserId())){
+                if(ActivitiConstant.EXECUTOR_candidate.equals(hik.getType())&& StrUtil.isNotBlank(hik.getUserId())){
                     String username = sysBaseAPI.getUserByName(hik.getUserId()).getRealname();
                     Assignee assignee = new Assignee(username, false);
-                    if(StrUtil.isNotBlank(userId)&&userId.equals(hik.getUserId())){
+                    /*审批过的标记一下，前端标颜色用*/
+                    if(CollectionUtil.contains(userIds_b,hik.getUserId()) || CollectionUtil.contains(userIds_p,hik.getUserId())){
                         assignee.setIsExecutor(true);
                     }
                     assignees.add(assignee);
@@ -235,6 +291,7 @@ public class ActTaskController {
         return Result.ok(list);
     }
     @RequestMapping(value = "/pass", method = RequestMethod.POST)
+    @AutoLog(value = "流程-任务节点审批通过")
     @ApiOperation(value = "任务节点审批通过")
     public Result<Object> pass(@ApiParam("任务id") @RequestParam String id,
                                @ApiParam("流程实例id") @RequestParam String procInstId,
@@ -257,10 +314,11 @@ public class ActTaskController {
             taskService.resolveTask(id);
             taskService.setAssignee(id, oldAssignee);
         }
+        /*完成任务*/
         taskService.complete(id);
         ActBusiness actBusiness = actBusinessService.getById(pi.getBusinessKey());
         //修改业务表的流程字段
-        actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"审批中-"+task.getName());
+        actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"审批中-"+task.getTaskDefinitionKey()+"-"+task.getName());
 
         task.getName();
         LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
@@ -277,16 +335,16 @@ public class ActTaskController {
                         actBusiness.setResult(ActivitiConstant.RESULT_TO_SUBMIT);
                         actBusinessService.updateById(actBusiness);
                         //修改业务表的流程字段
-                        actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"审批异常-"+task.getName()+"-审批节点未分配审批人，流程自动中断取消");
+                        actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"审批异常-"+task.getTaskDefinitionKey()+"-"+task.getName()+"-审批节点未分配审批人，流程自动中断取消");
 
                         break;
                     }else{
                         // 避免重复添加
-                        List<String> list = actBusinessService.selectIRunIdentity(t.getId(), "candidate");
+                        List<String> list = actBusinessService.selectIRunIdentity(t.getId(), ActivitiConstant.EXECUTOR_candidate);
                         if(list==null||list.size()==0) {
                             // 分配了节点负责人分发给全部
                             for (LoginUser user : users) {
-                                taskService.addCandidateUser(t.getId(), user.getId());
+                                taskService.addCandidateUser(t.getId(), user.getUsername());
                                 // 异步发消息
                                 actZprocessService.sendActMessage(loginUser,user,actBusiness,task.getName(),  sendMessage, sendSms, sendEmail);
                             }
@@ -295,7 +353,7 @@ public class ActTaskController {
                     }
                 }else{
                     // 避免重复添加
-                    List<String> list = actBusinessService.selectIRunIdentity(t.getId(), "candidate");
+                    List<String> list = actBusinessService.selectIRunIdentity(t.getId(), ActivitiConstant.EXECUTOR_candidate);
                     if(list==null||list.size()==0) {
 
                         for(String assignee : assignees.split(",")){
@@ -314,7 +372,7 @@ public class ActTaskController {
             actBusinessService.updateById(actBusiness);
             // 异步发消息
             LoginUser user = sysBaseAPI.getUserByName(actBusiness.getUserId());
-            actZprocessService.sendMessage(loginUser,user,ActivitiConstant.MESSAGE_PASS_CONTENT,
+            actZprocessService.sendMessage(actBusiness.getId(),loginUser,user,ActivitiConstant.MESSAGE_PASS_CONTENT,
                     String.format("您的 【%s】 申请已通过！",actBusiness.getTitle()),sendMessage, sendSms, sendEmail);
             //修改业务表的流程字段
             actBusinessService.updateBusinessStatus(actBusiness.getTableName(), actBusiness.getTableId(),"审批通过");
@@ -322,11 +380,12 @@ public class ActTaskController {
         }
         // 记录实际审批人员
         actBusinessService.insertHI_IDENTITYLINK(IdUtil.simpleUUID(),
-                ActivitiConstant.EXECUTOR_TYPE, loginUser.getUsername(), id, procInstId);
+                ActivitiConstant.EXECUTOR_TYPE_p, loginUser.getUsername(), id, procInstId);
         return Result.ok("操作成功");
     }
     @RequestMapping(value = "/delegate", method = RequestMethod.POST)
     @ApiOperation(value = "委托他人代办")
+    @AutoLog(value = "流程-委托他人代办")
     public Result<Object> delegate(@ApiParam("任务id") @RequestParam String id,
                                    @ApiParam("委托用户id") @RequestParam String userId,
                                    @ApiParam("流程实例id") @RequestParam String procInstId,
@@ -342,13 +401,15 @@ public class ActTaskController {
         taskService.addComment(id, procInstId, comment);
         taskService.delegateTask(id, userId);
         taskService.setOwner(id, sysUser.getUsername());
+        ActBusiness actBusiness = actBusinessService.getOne(new LambdaQueryWrapper<ActBusiness>().eq(ActBusiness::getProcInstId, procInstId).last("limit 1"));
         // 异步发消息
-        actZprocessService.sendMessage(sysUser,sysBaseAPI.getUserByName(userId),ActivitiConstant.MESSAGE_DELEGATE_CONTENT,
+        actZprocessService.sendMessage(actBusiness.getId(),sysUser,sysBaseAPI.getUserByName(userId),ActivitiConstant.MESSAGE_DELEGATE_CONTENT,
                 String.format("您有一个来自 %s 的委托需要处理！",sysUser.getRealname()),sendMessage, sendSms, sendEmail);
         return Result.ok("操作成功");
     }
     @RequestMapping(value = "/backToTask", method = RequestMethod.POST)
     @ApiOperation(value = "任务节点审批驳回至指定历史节点")
+    @AutoLog(value = "流程-任务节点审批驳回至指定历史节点")
     public Result<Object> backToTask(@ApiParam("任务id") @RequestParam String id,
                                      @ApiParam("驳回指定节点key") @RequestParam String backTaskKey,
                                      @ApiParam("流程实例id") @RequestParam String procInstId,
@@ -373,13 +434,14 @@ public class ActTaskController {
         // 实现跳转
         managementService.executeCommand(new JumpTask(procInstId, hisActivity.getId()));
         // 重新分配原节点审批人
+        ActBusiness actBusiness = actBusinessService.getOne(new LambdaQueryWrapper<ActBusiness>().eq(ActBusiness::getProcInstId, procInstId).last("limit 1"));
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(procInstId).list();
         if(tasks!=null&&tasks.size()>0){
             tasks.forEach(e->{
                 for(String assignee:assignees.split(",")){
                     taskService.addCandidateUser(e.getId(), assignee);
                     // 异步发消息
-                    actZprocessService.sendMessage(loginUser,sysBaseAPI.getUserByName(assignee),ActivitiConstant.MESSAGE_TODO_CONTENT
+                    actZprocessService.sendMessage(actBusiness.getId(),loginUser,sysBaseAPI.getUserByName(assignee),ActivitiConstant.MESSAGE_TODO_CONTENT
                     ,"您有一个任务待审批，请尽快处理！",sendMessage, sendSms, sendEmail);
                 }
                 if(priority!=null){
@@ -389,7 +451,7 @@ public class ActTaskController {
         }
         // 记录实际审批人员
         actBusinessService.insertHI_IDENTITYLINK(IdUtil.simpleUUID(),
-                ActivitiConstant.EXECUTOR_TYPE, loginUser.getUsername(), id, procInstId);
+                ActivitiConstant.EXECUTOR_TYPE_b, loginUser.getUsername(), id, procInstId);
         return Result.ok("操作成功");
     }
 
@@ -417,71 +479,21 @@ public class ActTaskController {
 
     }
     /*已办列表*/
-    @RequestMapping(value = "/doneList")
+    @AutoLog(value = "流程-已办列表")
+    @ApiOperation(value="流程-已办列表", notes="已办列表")
+    @RequestMapping(value = "/doneList" ,method = RequestMethod.GET)
     public Result<Object> doneList(String name,
                                    String categoryId,
                                    Integer priority,
                                    HttpServletRequest req){
 
-        List<HistoricTaskVo> list = new ArrayList<>();
-        LoginUser loginUser = (LoginUser) SecurityUtils.getSubject().getPrincipal();
-        String userId = loginUser.getUsername();
-        HistoricTaskInstanceQuery query = historyService.createHistoricTaskInstanceQuery().or().taskCandidateUser(userId).
-                taskAssignee(userId).endOr().finished();
-
-        // 多条件搜索
-        query.orderByTaskCreateTime().desc();
-        if(StrUtil.isNotBlank(name)){
-            query.taskNameLike("%"+name+"%");
-        }
-        if(StrUtil.isNotBlank(categoryId)){
-            query.taskCategory(categoryId);
-        }
-        if(priority!=null){
-            query.taskPriority(priority);
-        }
-        List<HistoricTaskInstance> taskList = query.list();
-        // 转换vo
-        List<ComboModel> allUser = sysBaseAPI.queryAllUser();
-        Map<String, String> userMap = allUser.stream().collect(Collectors.toMap(ComboModel::getUsername, ComboModel::getTitle));
-        taskList.forEach(e -> {
-            HistoricTaskVo htv = new HistoricTaskVo(e);
-            // 关联委托人
-            if(StrUtil.isNotBlank(htv.getOwner())){
-                htv.setOwner(userMap.get(htv.getOwner()));
-            }
-            List<HistoricIdentityLink> identityLinks = historyService.getHistoricIdentityLinksForProcessInstance(htv.getProcInstId());
-            for(HistoricIdentityLink hik : identityLinks){
-                // 关联发起人
-                if("starter".equals(hik.getType())&&StrUtil.isNotBlank(hik.getUserId())){
-                    htv.setApplyer(userMap.get(hik.getUserId()));
-                }
-            }
-            // 关联审批意见
-            List<Comment> comments = taskService.getTaskComments(htv.getId(), "comment");
-            if(comments!=null&&comments.size()>0){
-                htv.setComment(comments.get(0).getFullMessage());
-            }
-            // 关联流程信息
-            ActZprocess actProcess = actZprocessService.getById(htv.getProcDefId());
-            if(actProcess!=null){
-                htv.setProcessName(actProcess.getName());
-                htv.setRouteName(actProcess.getRouteName());
-            }
-            // 关联业务key
-            HistoricProcessInstance hpi = historyService.createHistoricProcessInstanceQuery().processInstanceId(htv.getProcInstId()).singleResult();
-            htv.setBusinessKey(hpi.getBusinessKey());
-            ActBusiness actBusiness = actBusinessService.getById(hpi.getBusinessKey());
-            if(actBusiness!=null){
-                htv.setTableId(actBusiness.getTableId());
-                htv.setTableName(actBusiness.getTableName());
-            }
-
-            list.add(htv);
-        });
+        List<HistoricTaskVo> list = actBusinessService.getHistoricTaskVos(req, name, categoryId, priority);
         return Result.ok(list);
     }
+
     /*删除任务历史*/
+    @AutoLog(value = "流程-删除任务历史")
+    @ApiOperation(value="流程-删除任务历史", notes="删除任务历史")
     @RequestMapping(value = "/deleteHistoric/{ids}", method = RequestMethod.POST)
     public Result<Object> deleteHistoric( @PathVariable String ids){
 

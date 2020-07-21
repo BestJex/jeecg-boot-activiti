@@ -17,6 +17,7 @@ components: { BEcharts },
      `
 - 属性  
 option ：百度echarts属性参数
+theme ：主题，默认 light
 
 - 方法  
 click ：点击事件 返回object

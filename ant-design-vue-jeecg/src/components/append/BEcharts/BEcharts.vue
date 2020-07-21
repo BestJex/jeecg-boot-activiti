@@ -11,6 +11,11 @@
         option: {
           type: Object,
           default: {}
+        },
+        /* 主题 default light dark*/
+        theme: {
+          type: String,
+          default: 'light'
         }
       },
       data() {
@@ -25,7 +30,7 @@
       },
       mounted() {
         const _this = this;
-        this.chart = echart.init(this.$el);
+        this.chart = echart.init(this.$el, this.theme);
         this.updateChartView();
         this.chart.on('click',(params)=>{
           _this.$emit('click',params);
@@ -42,7 +47,8 @@
          */
         updateChartView() {
           if (!this.chart) return;
-          this.chart.setOption(this.option, true);
+          let option = this.option;
+          this.chart.setOption(option, true);
         },
         /**
          * 对chart元素尺寸进行监听，当发生变化时同步更新echart视图

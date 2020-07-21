@@ -1,5 +1,6 @@
 <template>
   <div>
+    <b-echarts :option="option" @click="click" style="height: 300px;width: 100%"></b-echarts>
     <index-chart v-if="indexStyle==1"></index-chart>
     <index-bdc v-if="indexStyle==2"></index-bdc>
     <index-task v-if="indexStyle==3"></index-task>
@@ -18,17 +19,35 @@
   import IndexChart from './IndexChart'
   import IndexTask from "./IndexTask"
   import IndexBdc from './IndexBdc'
+  import BEcharts from '@/components/append/BEcharts/BEcharts.vue'
 
   export default {
     name: "Analysis",
     components: {
       IndexChart,
       IndexTask,
-      IndexBdc
+      IndexBdc,BEcharts
     },
     data() {
       return {
-        indexStyle:1
+        indexStyle:1,
+        option: {
+          title: {
+            text: '百度echarts 封装案例'
+          },
+          xAxis: {
+            type: 'category',
+            data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+          },
+          yAxis: {
+            type: 'value'
+          },
+          series: [{
+            data: [80, 932, 901, 934, 1290, 1330, 1320],
+            type: 'line'
+          }]
+        }
+
       }
     },
     created() {
@@ -36,6 +55,9 @@
     },
     methods: {
 
+      click(param) {
+        console.log(param)
+      }
     }
   }
 </script>

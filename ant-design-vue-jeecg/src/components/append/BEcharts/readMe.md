@@ -1,5 +1,8 @@
 ###介绍
 >封装百度echarts，只需专注于option，dom窗口大小变化图形自动刷新大小
+####依赖
+>yarn add echarts  
+>yarn add element-resize-detector
 ###使用方式说明
 - 引入组件  
 `

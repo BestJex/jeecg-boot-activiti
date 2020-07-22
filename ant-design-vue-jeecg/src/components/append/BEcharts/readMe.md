@@ -16,7 +16,7 @@ components: { BEcharts },
 `<b-echarts :option="option" @click="click" style="height: 300px;width: 100%"></b-echarts>
      `
 - 属性  
-option ：百度echarts属性参数
+option ：百度echarts属性参数  
 theme ：主题，默认 light
 
 - 方法  

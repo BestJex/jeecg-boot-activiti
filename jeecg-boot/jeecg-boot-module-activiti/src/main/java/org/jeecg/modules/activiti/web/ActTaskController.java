@@ -314,6 +314,17 @@ public class ActTaskController {
             taskService.resolveTask(id);
             taskService.setAssignee(id, oldAssignee);
         }
+        /*会签思路：
+        act_hi_identitylink记录着审批历史 ActivitiConstant.EXECUTOR_TYPE_p 标识审批通过
+        1、节点设置中增加人数字段，表示需要多少人通过这个任务节点才通过
+        2、此处查询审批历史，查看当前节点的审批情况，符合预设的人数调用 taskService.complete(id); 完成该节点任务
+        否则只记录审批数据，不完成该任务节点
+        3、会有的问题：
+            1、如此，审批过的人代办中还会看到这条任务，需要标识自己审批过，但是这条任务自己不能再审了  或 能再审，但是再审记得把之前审批过的记录删掉
+            2、下一个节点的审批人只能最后通过的人选择才有效
+            3、如果下一个节点是会签，指定下一节点的审批人的数量必须不小于节点预设数量
+            其他问题，待暴露
+          */
         /*完成任务*/
         taskService.complete(id);
         ActBusiness actBusiness = actBusinessService.getById(pi.getBusinessKey());
